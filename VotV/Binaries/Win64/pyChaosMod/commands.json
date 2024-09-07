@@ -1,0 +1,409 @@
+{
+  "commands": [
+    {
+      "name": "Pyramid Time",
+      "command": "pyramidTime",
+      "trigger_text": "It's pyramid time!"
+    },
+    {
+      "name": "Kerfur Yeet",
+      "command": "kerfurYeet",
+      "trigger_text": "Get yeeted"
+    },
+    {
+      "name": "Red Sky",
+      "command": "redSky",
+      "trigger_text": "When the sun sets the sky will turn blood red"
+    },
+    {
+      "name": "Kill All Kerfurs",
+      "command": "killAllKerfurs",
+      "trigger_text": "RIP Kerfurs"
+    },
+    {
+      "name": "Spawn 3 Kerfurs",
+      "command": "spawnKerfurs",
+      "trigger_text": "Meow meow meow"
+    }, 
+    {
+      "name": "Ignite Player",
+      "command": "ignitePlayer",
+      "trigger_text": "Burn baby burn"
+    }, 
+    {
+      "name": "Teleport to Radio Tower",
+      "command": "teleportRadioTower",
+      "trigger_text": "Enjoy the view"
+    }, 
+    {
+      "name": "Teleport to Wind Turbine",
+      "command": "teleportTurbine",
+      "trigger_text": "Bit chilly up here, innit?"
+    }, 
+    {
+      "name": "Ragdoll Player",
+      "command": "ragdollPlayer",
+      "trigger_text": "See you next fall"
+    }, 
+    {
+      "name": "Super Speed",
+      "command": "superSpeed",
+      "trigger_text": "Super speed for 3 minutes"
+    }, 
+    {
+      "name": "Hulk Mode",
+      "command": "hulkMode",
+      "trigger_text": "Pick up something heavy!"
+    }, 
+    {
+      "name": "Smoke a Cigarette",
+      "command": "smokeCig",
+      "trigger_text": "Smokuloid in the house"
+    }, 
+    {
+      "name": "500 Cigarettes",
+      "command": "500cigs",
+      "trigger_text": "Five hundred cigarettes."
+    }, 
+    {
+      "name": "Explode Player",
+      "command": "explodePlayer",
+      "trigger_text": "Boom"
+    }, 
+    {
+      "name": "Bad Sun",
+      "command": "badSun",
+      "trigger_text": "Don't look at it"
+    }, 
+    {
+      "name": "Black Fog",
+      "command": "blackFog",
+      "trigger_text": "It consumes all"
+    }, 
+    {
+      "name": "Jellyfish Time",
+      "command": "jellyFishTime",
+      "trigger_text": "Where's spongebob?"
+    }, 
+    {
+      "name": "Spawn Meatball",
+      "command": "spawnMeatball",
+      "trigger_text": "Everyone loves this little guy"
+    }, 
+    {
+      "name": "Low Gravity 3 minutes",
+      "command": "lowGravity",
+      "trigger_text": "One small step for man"
+    }, 
+    {
+      "name": "Spawn Zero Grav Gun",
+      "command": "spawnZeroGun",
+      "trigger_text": "What does this do?"
+    }, 
+    {
+      "name": "Spawn Sonic Gun",
+      "command": "spawnSonicGun",
+      "trigger_text": "Have some Lucio-OHs!"
+    }, 
+    {
+      "name": "Free Coins",
+      "command": "freeMoney",
+      "trigger_text": "Money money money"
+    }, 
+    {
+      "name": "Sky Fall",
+      "command": "skyFallingEvent",
+      "trigger_text": "Look up"
+    }, 
+    {
+      "name": "Wasp Attack",
+      "command": "waspAttack",
+      "trigger_text": "Hope you have your epipen"
+    }, 
+    {
+      "name": "Laser Spam",
+      "command": "laserSpam",
+      "trigger_text": "Pew pew pew"
+    }, 
+    {
+      "name": "Caltrops Trap",
+      "command": "caltropsTrap",
+      "trigger_text": "Watch your step"
+    }, 
+    {
+      "name": "Spawn Meatball (swedish)",
+      "command": "spawnMeatballFood",
+      "trigger_text": "Not our little friend, but still delicious"
+    }, 
+    {
+      "name": "Spawn Maxwell",
+      "command": "spawnMaxwell",
+      "trigger_text": "Maxwell is here"
+    }, 
+    {
+      "name": "Spawn Kavotia",
+      "command": "spawnKavotia",
+      "trigger_text": "I would run if I were you"
+    }, 
+    {
+      "name": "Wisp Teleport",
+      "command": "wispTeleport",
+      "trigger_text": "Where am I?"
+    }, 
+    {
+      "name": "Spawn ATV",
+      "command": "spawnATV",
+      "trigger_text": "Vroom vroom"
+    }, 
+    {
+      "name": "Insane ATVs",
+      "command": "insaneATVs",
+      "trigger_text": "Who's driving this boat?"
+    },
+    {
+      "name": "Explode all ATVs",
+      "command": "explodeAllATVs",
+      "trigger_text": "My car!"
+    }, 
+    {
+      "name": "Fix all ATVs",
+      "command": "fixAllATVs",
+      "trigger_text": "Johnny on the spot"
+    }, 
+    {
+      "name": "Smoke 500 Cigarettes",
+      "command": "smoke500cigs",
+      "trigger_text": "Instant lung cancer"
+    }, 
+    {
+      "name": "Delete Active Signal",
+      "command": "deleteActiveSignal",
+      "trigger_text": "No more signal"
+    }, 
+    {
+      "name": "Random Dream",
+      "command": "randomDream",
+      "trigger_text": "What's in your head?"
+    }, 
+    {
+      "name": "Zero Sleep",
+      "command": "forceSleep",
+      "trigger_text": "Zzzzz"
+    }, 
+    {
+      "name": "Take a Photo",
+      "command": "takePicture",
+      "trigger_text": "Say cheese"
+    }, 
+    {
+      "name": "Starve Player",
+      "command": "starvePlayer",
+      "trigger_text": "Food! Water! Atmospheeeere!"
+    }, 
+    {
+      "name": "Full Tummy",
+      "command": "fullTummy",
+      "trigger_text": "I'm full. Bursting, even."
+    }, 
+    {
+      "name": "Double Points",
+      "command": "doublePoints",
+      "trigger_text": "Payday"
+    },
+    {
+      "name": "Halve Points",
+      "command": "halfPoints",
+      "trigger_text": "Tax day"
+    },
+    {
+      "name": "Nausea",
+      "command": "nauseaEffect",
+      "trigger_text": "I don't feel so good"
+    },
+    {
+      "name": "LSD Trip",
+      "command": "lsdEffect",
+      "trigger_text": "The snozzberries taste like snozzberries"
+    },
+    {
+      "name": "Teleport to Base",
+      "command": "teleportToBaseBalcony",
+      "trigger_text": "Home sweet home"
+    },
+    {
+      "name": "Teleport to Top of Base",
+      "command": "teleportTopOfBase",
+      "trigger_text": "I can see my house from here"
+    },
+    {
+      "name": "Evil Erie Plush",
+      "command": "evilEriePlush",
+      "trigger_text": "So cute, yet so evil"
+    },
+    {
+      "name": "Immortal for 3 minutes",
+      "command": "immortalForTime",
+      "trigger_text": "I am invincible!"
+    },
+    {
+      "name": "Big Kel",
+      "command": "bigKel",
+      "trigger_text": "Big Kel is here for 3 minutes"
+    },
+    {
+      "name": "Tiny Kel",
+      "command": "tinyKel",
+      "trigger_text": "Streamers real height revealed"
+    },
+    {
+      "name": "Fast Time",
+      "command": "fastTimeScale",
+      "trigger_text": "Time flies when you're having fun"
+    },
+    {
+      "name": "Tiny Kerfurs",
+      "command": "tinyKerfurs",
+      "trigger_text": "Tiny but still helpful"
+    },
+    {
+      "name": "Big Kerfurs",
+      "command": "bigKerfurs",
+      "trigger_text": "Beeg kerfurs"
+    },
+    {
+      "name": "Base Rave",
+      "command": "baseRave",
+      "trigger_text": "Unce unce unce"
+    },
+    {
+      "name": "Fishsplosion",
+      "command": "fishSplosion",
+      "trigger_text": "Borg friends"
+    },
+    {
+      "name": "Big Fish",
+      "command": "bigLakeFish",
+      "trigger_text": "Big fish in a small pond"
+    },
+    {
+      "name": "Oh Fiddlesticks",
+      "command": "ohFiddlesticks",
+      "trigger_text": "What now?"
+    },
+    {
+      "name": "Force Server Minigame",
+      "command": "forceServerMinigame",
+      "trigger_text": "Got your numpad ready? (click if unresponsive)"
+    },
+    {
+      "name": "Break 3 Random Servers",
+      "command": "breakRandomServers",
+      "trigger_text": "Oops"
+    },
+    {
+      "name": "Break Random Transformer",
+      "command": "breakRandomGenerator",
+      "trigger_text": "No more power"
+    },
+    {
+      "name": "Reset All Transformers",
+      "command": "fixGenerators",
+      "trigger_text": "Let there be light"
+    },
+    {
+      "name": "Garbage Day",
+      "command": "garbageDay",
+      "trigger_text": "GARBAGE DAY!"
+    },
+    {
+      "name": "Spam Flashlight",
+      "command": "spamFlashlight",
+      "trigger_text": "I can't see!"
+    },
+    {
+      "name": "Madness Combat",
+      "command": "madnessCombat",
+      "trigger_text": "So anyways, I started blasting"
+    },
+    {
+      "name": "Maxwell Bomb",
+      "command": "maxwellBomb",
+      "trigger_text": "He's gonna blow!"
+    },
+    {
+      "name": "Drain Sleep",
+      "command": "drainSleep",
+      "trigger_text": "Have some Zzzquil"
+    },
+    {
+      "name": "Energy Drink",
+      "command": "addEnergy",
+      "trigger_text": "I'm wired!"
+    },
+    {
+      "name": "Charborg Nextbot",
+      "command": "nextbotCharborg",
+      "trigger_text": "Pick up the phone, baby"
+    },
+    {
+      "name": "Jerma Nextbot",
+      "command": "nextbotJerma",
+      "trigger_text": "Aa ee oo"
+    },
+    {
+      "name": "Walter Nextbot",
+      "command": "nextbotWalter",
+      "trigger_text": "Woof"
+    },
+    {
+      "name": "Glorp Friend",
+      "command": "nextbotGlorpFriend",
+      "trigger_text": "Zazaglorp"
+    },
+    {
+      "name": "Computer Jumpscare",
+      "command": "jumpscareComputer",
+      "trigger_text": "You beat the maze!"
+    },
+    {
+      "name": "Free Battery",
+      "command": "freeBattery",
+      "trigger_text": "I can see the light"
+    },
+    {
+      "name": "Order Shrimp",
+      "command": "orderShrimp",
+      "trigger_text": "Shrimp on the barbie"
+    },
+    {
+      "name": "Order Drives",
+      "command": "orderDrives",
+      "trigger_text": "For your signals, sir"
+    },
+    {
+      "name": "Order Pizza",
+      "command": "orderPizza",
+      "trigger_text": "Pizza time!"
+    },
+    {
+      "name": "Order TV",
+      "command": "orderTV",
+      "trigger_text": "Watch some Family Guy"
+    },
+    {
+      "name": "Order Radio",
+      "command": "orderRadio",
+      "trigger_text": "I'm on the air"
+    },
+    {
+      "name": "Order Banana",
+      "command": "orderBanana",
+      "trigger_text": "Quit monkeying around"
+    },
+    {
+      "name": "Order Cheese",
+      "command": "orderCheese",
+      "trigger_text": "We're rats"
+    }
+  ]
+}
