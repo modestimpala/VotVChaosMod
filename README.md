@@ -269,14 +269,25 @@ https://github.com/user-attachments/assets/9d8f602b-c36d-4a8f-b708-261537f7ef94
 
 Twitch Chatter Email Showcase
 
+
+https://github.com/user-attachments/assets/e9362855-1803-4733-a60d-bf4571f273f7
+
+
+Twitch Shopping Showcase
   
   
+
+# Commands
 
 <details>
 
 <summary>Current List of Commands (spoilers)</summary>
 
   
+
+
+
+
 
 - 500cigs
 
