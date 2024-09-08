@@ -90,15 +90,15 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
   
 
-2. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/pyChaosMod.zip) from GitHub releases
+2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/VotV.7z) from GitHub releases
 
   
 
-3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
+3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\
 
   
 
-4. Place folder pyChaosMod into Win64 directory
+4. Place folder VotV folder into WindowsNoEditor directory
 
   
 
@@ -107,14 +107,6 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
   
 
 6. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
-
-  
-
-7. Navigate to modded game directory, pa08_00**\WindowsNoEditor\VotV\Content\Paks\LogicMods
-
-  
-
-8. Copy ChaosMod.pak from repo into LogicMods
 
   
 
