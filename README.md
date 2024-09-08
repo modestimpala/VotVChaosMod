@@ -90,7 +90,7 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
   
 
-2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/VotV.7z) from GitHub releases
+2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.1/VotV.zip) from GitHub releases
 
   
 
@@ -100,13 +100,17 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
 4. Place folder VotV folder into WindowsNoEditor directory
 
+
+5. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/pyChaosMod.zip) from GitHub releases
   
 
-5. Get an OAuth bot token from https://twitchtokengenerator.com/
+6. Place pyChaosMod folder in Win64 folder, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
 
-  
 
-6. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
+7. Get an OAuth bot token from https://twitchtokengenerator.com/
+
+
+8. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
 
   
 
