@@ -1,6 +1,7 @@
 import time
 import json
 import random
+import os
 from src.twitch_connection import TwitchConnection
 
 class ShopSystem:
@@ -11,6 +12,7 @@ class ShopSystem:
         self.next_shop_open_time = time.time() + self.get_next_shop_interval()
         self.user_shop_cooldowns = {}
         self.twitch_connection = twitch_connection
+        self.master_file = config['files']['shops_master']
 
     def get_next_shop_interval(self):
         return random.randint(self.config['chatShop']['minOpenInterval'], 
@@ -42,15 +44,26 @@ class ShopSystem:
         shop_data = {
             "username": username,
             "item": item if item else "general",
-            "timestamp": current_time
+            "timestamp": current_time,
+            "processed": False
         }
 
-        filename = f"./shops/{username}_{int(current_time)}.json"
-        with open(filename, 'w') as f:
-            json.dump(shop_data, f, indent=2)
+        orders = self.read_master_file()
+        orders.append(shop_data)
+        self.write_master_file(orders)
 
         # Update user's cooldown
         self.user_shop_cooldowns[username] = current_time
+
+    def read_master_file(self):
+        if os.path.exists(self.master_file):
+            with open(self.master_file, 'r') as f:
+                return json.load(f)
+        return []
+
+    def write_master_file(self, data):
+        with open(self.master_file, 'w') as f:
+            json.dump(data, f, indent=2)
         
     def open_shop(self):
         self.shop_open = True
