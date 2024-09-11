@@ -13,7 +13,7 @@ Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-ga
 
 This mod requires partial manual installation and will *not* work without the external Python program. Please read the instructions below for installation.
 
-You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/pyChaosMod.zip) installed in Win64 folder. *Please read the instructions below for installation.*
+You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) installed in Win64 folder. *Please read the instructions below for installation.*
 
   
 
@@ -56,7 +56,7 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
   
 
-3. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/pyChaosMod.zip) from GitHub releases
+3. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) from GitHub releases
 
   
 
@@ -90,7 +90,7 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
   
 
-2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.1/VotV.zip) from GitHub releases
+2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/VotV.zip) from GitHub releases
 
   
 
@@ -101,16 +101,13 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 4. Place folder VotV folder into WindowsNoEditor directory
 
 
-5. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.0/pyChaosMod.zip) from GitHub releases
-  
-
-6. Place pyChaosMod folder in Win64 folder, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
+5. Ensure pyChaosMod is located in Win64 directory, if not, download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) from GitHub releases
 
 
-7. Get an OAuth bot token from https://twitchtokengenerator.com/
+6. Get an OAuth bot token from https://twitchtokengenerator.com/
 
 
-8. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
+7. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
 
   
 
