@@ -235,17 +235,5 @@ if setupCorrect then
         end
     end)
 
-    ExecuteWithDelay(5000, function()
-        RegisterHook("/Script/Engine.PlayerController:ClientRestart", function(Context, NewPawn)
-            os.remove(config.files.emails_enable)
-            local emailHandler = FindFirstOf("emailHandler_C")
-            if emailHandler:IsValid() then
-                emailHandler:K2_DestroyActor()
-            end
-            os.remove(config.files.enable)
-
-        end)
-    end)
-
     print("[ChaosMod] Successfully loaded ChaosMod")
 end
