@@ -30,6 +30,14 @@ if not setupCorrect then
 end
 
 if setupCorrect then
+    -- wipe master file contents
+    local file = io.open(emails_master_file, "w")
+    file:write("[]")
+    file:close()
+    local file = io.open(shops_master_file, "w")
+    file:write("[]")
+    file:close()
+
     -- Load configurations
     local config_file = io.open(config_file, "r")
     local config = json.decode(config_file:read("*all"))
