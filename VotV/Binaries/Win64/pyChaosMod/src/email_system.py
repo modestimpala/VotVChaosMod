@@ -10,6 +10,7 @@ class EmailSystem:
         self.email_cooldowns = {}
         self.email_cooldown_time = config['emails']['user_cooldown']
         self.twitch_connection = twitch_connection
+        self.master_file = config['files']['emails_master']
 
     def process_email(self, username, subject, body):
         current_time = time.time()
@@ -36,14 +37,25 @@ class EmailSystem:
             "username": username,
             "subject": subject.strip(),
             "body": body.strip(),
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "processed": False
         }
         
-        filename = f"./emails/{username}_{int(time.time())}.json"
-        with open(filename, 'w') as f:
-            json.dump(email_data, f, indent=2)
+        emails = self.read_master_file()
+        emails.append(email_data)
+        self.write_master_file(emails)
         
-        print(f"Email saved: {filename}")
+        print(f"Email saved for {username}")
+
+    def read_master_file(self):
+        if os.path.exists(self.master_file):
+            with open(self.master_file, 'r') as f:
+                return json.load(f)
+        return []
+
+    def write_master_file(self, data):
+        with open(self.master_file, 'w') as f:
+            json.dump(data, f, indent=2)
 
     def enable_emails(self):
         self.emails_enabled = True

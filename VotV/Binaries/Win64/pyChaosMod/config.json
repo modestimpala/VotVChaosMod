@@ -36,7 +36,9 @@
     "result": "result_file.txt",
     "enable": "chaos_enable.txt",
     "commands": "commands.json",
-    "emails_enable": "email_enable.txt"
+    "emails_enable": "email_enable.txt",
+    "emails_master": "emails_master.json",
+    "shops_master": "shops_master.json"
   },
   "update_interval": 0.1
 }

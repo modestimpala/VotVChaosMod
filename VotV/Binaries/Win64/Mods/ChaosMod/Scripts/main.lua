@@ -7,19 +7,17 @@ local UEHelpers = require("UEHelpers")  -- Load UEHelpers
 -- Define the base path
 local base_path = "./pyChaosMod/"
 local config_file = base_path .. "config.json"
-local emails_path = base_path .. "emails/"
-local shops_path = base_path .. "shops/"
+local emails_master_file = base_path .. "emails_master.json"
+local shops_master_file = base_path .. "shops_master.json"
 
 local setupCorrect = false
 local f = io.open(config_file, "r")
 if f then 
     f:close()
-    print("[ChaosMod] Found config file")
     setupCorrect = true
 end
 
 if not setupCorrect then
-    print("You do not have ChaosMod installed correctly. Please follow the instructions in the README.md")
     LoopAsync(10000, function()
         local notInstalled = FindFirstOf("chaosNotInstalledCorrectly_C")
         if not notInstalled:IsValid() then
@@ -55,180 +53,77 @@ if setupCorrect then
     local emailsEnabled = false
     local lastShopOrder = 0
 
-    RegisterConsoleCommandHandler("lol", function()
-        local stuff = FindAllOf("piramid2_C")
-        for _, thing in pairs(stuff) do
-            thing:K2_DestroyActor()
-        end
-    end)
-
-    RegisterConsoleCommandHandler("test", function()
-        local FirstPlayerController = UEHelpers.GetPlayerController()
-        local Pawn = FirstPlayerController.Pawn
-        local obj_C = StaticFindObject("/Game/objects/prop_batts.prop_batts_C")
-        local Location = Pawn:K2_GetActorLocation()
-        local Rotation = Pawn:K2_GetActorRotation()
-        local World = Pawn:GetWorld()
-        local obj = World:SpawnActor(obj_C, Location, Rotation, false, nil, nil, false, false)
-        obj:playerHandUse_RMB(Pawn)
-        return true
-    end)
-
-    RegisterConsoleCommandHandler("test2", function()
-        local World = UEHelpers:GetWorld()
-
-        local spawn = World:SpawnActor(StaticFindObject("/Game/Mods/ChaosMod/Assets/shopOrderHandler.shopOrderHandler_C"), {}, {}, false, nil, nil, false, false)
-
-        spawn:placeOrderTwitch(FName("Shrimp"), FText("TestUser"))
-
-        ExecuteWithDelay(1000, function()
-            spawn:K2_DestroyActor()
-        end)
-
-        return true
-    end)
-
-    RegisterConsoleCommandHandler("godmode", function()
-        local mainGame = FindFirstOf("mainGamemode_C")
-        mainGame.Immortal = not mainGame.Immortal
-        return true
-    end)
-
-    RegisterConsoleCommandHandler("sandbox", function()
-        local ui = FindFirstOf("umg_menu_C")
-        ui:openSandbox()
-    end)
-
     RegisterConsoleCommandHandler(("Chaos"), function(full, args)
         local command = args[1]
-        print("Executing command: " .. command)
         for _, cmd in ipairs(commands_config.commands) do
             if cmd.command == command then
-                print("Found command: " .. cmd.command)
                 ExecuteCommand(cmd.command)
             end
         end
         return true
     end)
 
-    RegisterConsoleCommandHandler(("PlayerPos"), function()
-        local FirstPlayerController = UEHelpers:GetPlayerController()
-        local Pawn = FirstPlayerController.Pawn
-        local Location = Pawn:K2_GetActorLocation()
-        print(string.format("[MyLuaMod] Player location: {X=%.3f, Y=%.3f, Z=%.3f}\n", Location.X, Location.Y, Location.Z))
-        if lastLocation then
-            print(string.format("[MyLuaMod] Player moved: {delta_X=%.3f, delta_Y=%.3f, delta_Z=%.3f}\n",
-                Location.X - lastLocation.X,
-                Location.Y - lastLocation.Y,
-                Location.Z - lastLocation.Z)
-            )
-        end
-        lastLocation = Location
-        return true
-    end)
-
-    RegisterConsoleCommandHandler(("PlayerRot"), function()
-        local FirstPlayerController = UEHelpers:GetPlayerController()
-        local Pawn = FirstPlayerController.Pawn
-        local Rotation = Pawn:K2_GetActorRotation()
-        print(string.format("[MyLuaMod] Player rotation: {Pitch=%.3f, Yaw=%.3f, Roll=%.3f}\n", Rotation.Pitch, Rotation.Yaw, Rotation.Roll))
-        return true
-    end)
-
-    -- Function to get all files in a directory
-    local function getFiles(directory)
-        local files = {}
-        local p = io.popen('dir "'..directory..'" /b')  -- Windows-specific command
-        for file in p:lines() do
-            table.insert(files, file)
-        end
-        p:close()
-        return files
+    -- Function to read the master JSON file
+    local function readMasterFile(filepath)
+        local file = io.open(filepath, "r")
+        if not file then return {} end
+        local content = file:read("*all")
+        file:close()
+        return json.decode(content) or {}
+    end
+    
+    -- Function to write the master JSON file
+    local function writeMasterFile(filepath, data)
+        local file = io.open(filepath, "w")
+        file:write(json.encode(data))
+        file:close()
     end
 
     -- Function to process new emails
     local function processNewEmails()
-        local files = getFiles(emails_path)
-        for _, file in ipairs(files) do
-            if file:match("%.json$") then
-                local filepath = emails_path .. file
-                local email_file = io.open(filepath, "r")
-                if email_file then
-                    local content = email_file:read("*all")
-                    email_file:close()
-                    
-                    local email_data = json.decode(content)
-                    if email_data then
-                        print("Processing email: " .. file)
-                        
-                        -- Find the emailHandler and call addTwitchEmail
-                        -- local emailHandler = FindFirstOf("emailHandler_C")
-                        local emailHandler = FindFirstOf("emailHandler_C")
-                        if not emailHandler:IsValid() then
-                            local World = UEHelpers:GetWorld()
-                            local emailHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/emailHandler.emailHandler_C")
-                            emailHandler = World:SpawnActor(emailHandler_C, {}, {})
-                        end
-                        if emailHandler and emailHandler:IsValid() then
-                            local fullBody = email_data.body .. " - " .. email_data.username
-                            emailHandler:addTwitchEmail(FText(email_data.subject), FText(fullBody))
-                            print("Email added: " .. email_data.subject .. " - " .. fullBody)
-                        else
-                            print("Failed to find valid emailHandler_C")
-                        end
-                        
-                        -- Delete the processed email file
-                        os.remove(filepath)
-                        print("Deleted email file: " .. file)
-                    else
-                        print("Failed to parse email JSON: " .. file)
-                    end
-                else
-                    print("Failed to open email file: " .. file)
+        local emails = readMasterFile(emails_master_file)
+        local processed = {}
+        for i, email in ipairs(emails) do
+            if not email.processed then
+                local emailHandler = FindFirstOf("emailHandler_C")
+                if not emailHandler:IsValid() then
+                    local World = UEHelpers:GetWorld()
+                    local emailHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/emailHandler.emailHandler_C")
+                    emailHandler = World:SpawnActor(emailHandler_C, {}, {})
                 end
+                if emailHandler and emailHandler:IsValid() then
+                    local fullBody = email.body .. " - " .. email.username
+                    emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                end
+                email.processed = true
+                processed[#processed + 1] = i
             end
+        end
+        if #processed > 0 then
+            writeMasterFile(emails_master_file, emails)
         end
     end
 
     local function processNewShopOrders()
-        local files = getFiles(shops_path)
-        for _, file in ipairs(files) do
-            if file:match("%.json$") then
-                local filepath = shops_path .. file
-                local shop_file = io.open(filepath, "r")
-                if shop_file then
-                    local content = shop_file:read("*all")
-                    shop_file:close()
-                    
-                    local shop_data = json.decode(content)
-                    if shop_data then
-                        print("Processing shop order: " .. file)
-                        
-                        -- Find the shopOrderHandler and call placeOrderTwitch
-                        local shopHandler = FindFirstOf("shopOrderHandler_C")
-                        if not shopHandler:IsValid() then
-                            local World = UEHelpers:GetWorld()
-                            local shopHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/shopOrderHandler.shopOrderHandler_C")
-                            shopHandler = World:SpawnActor(shopHandler_C, {}, {})
-                        end
-                        if shopHandler and shopHandler:IsValid() then
-                            print("Placing order: " .. shop_data.item .. " - " .. shop_data.username)
-                            shopHandler:placeOrderTwitch(FName(shop_data.item), FText(shop_data.username))
-                            print("Shop order placed: " .. shop_data.item .. " - " .. shop_data.username)
-                        else
-                            print("Failed to find valid shopOrderHandler_C")
-                        end
-                        
-                        -- Delete the processed shop order file
-                        os.remove(filepath)
-                        print("Deleted shop order file: " .. file)
-                    else
-                        print("Failed to parse shop order JSON: " .. file)
-                    end
-                else
-                    print("Failed to open shop order file: " .. file)
+        local orders = readMasterFile(shops_master_file)
+        local processed = {}
+        for i, order in ipairs(orders) do
+            if not order.processed then
+                local shopHandler = FindFirstOf("shopOrderHandler_C")
+                if not shopHandler:IsValid() then
+                    local World = UEHelpers:GetWorld()
+                    local shopHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/shopOrderHandler.shopOrderHandler_C")
+                    shopHandler = World:SpawnActor(shopHandler_C, {}, {})
                 end
+                if shopHandler and shopHandler:IsValid() then
+                    shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
+                end
+                order.processed = true
+                processed[#processed + 1] = i
             end
+        end
+        if #processed > 0 then
+            writeMasterFile(shops_master_file, orders)
         end
     end
 
@@ -239,24 +134,17 @@ if setupCorrect then
             local file = io.open(config.files.enable, "w")
             file:write("true")
             file:close()
-            print("Chaos Mod enabled")
         else
-            if os.remove(config.files.enable) then
-                print("Removed enable file")
-            end
-            print("Chaos Mod disabled")
+            os.remove(config.files.enable)
         end
     end
 
     -- Manually trigger voting
     local function triggerVoting()
         if chaosEnabled then
-            print("Triggering vote in overlay application...")
             local file = io.open(config.files.vote_trigger, "w")
             file:write("trigger")
             file:close()
-        else
-            print("Chaos Mod is not enabled. Enable it first.")
         end
     end
 
@@ -270,7 +158,6 @@ if setupCorrect then
             local result = json.decode(content)
             if result and result.version > lastExecutedVersion then
                 lastExecutedVersion = result.version
-                print("Voting ended. Result: " .. result.name)
                 
                 -- Split the command string in case it's a combined command
                 local commandNames = {}
@@ -291,12 +178,9 @@ if setupCorrect then
                 end
                 
                 if #commands > 0 then
-                    print("Executing chaos effect(s): " .. result.name)
                     for _, command in ipairs(commands) do
                         ExecuteCommand(command.command)
                     end
-                else
-                    print("No valid commands found for: " .. result.name)
                 end
             end
         end
@@ -305,11 +189,8 @@ if setupCorrect then
     local function clearEvents()
         local mainGamemode_C = FindFirstOf("mainGamemode_C")
         if mainGamemode_C:IsValid() then
-            print("Clearing events")
             mainGamemode_C.eventsActive:Empty()
             Hint("You can now pause/save")
-        else 
-            print("Failed to find mainGamemode_C")
         end
     end
 
@@ -319,7 +200,6 @@ if setupCorrect then
             local file = io.open(config.files.emails_enable, "w")
             file:write("true")
             file:close()
-            print("Emails enabled")
             Hint("Twitch Emails enabled")
             LoopAsync(1000, function()
                 if not emailsEnabled then
@@ -330,15 +210,11 @@ if setupCorrect then
                 end)
             end)
         else
-            if os.remove(config.files.emails_enable) then
-                print("Removed emails enable file")
-            end
+            os.remove(config.files.emails_enable)
             local emailHandler = FindFirstOf("emailHandler_C")
             if emailHandler:IsValid() then
-                print("Destroying emailHandler")
                 emailHandler:K2_DestroyActor()
             end
-            print("Emails disabled")
             Hint("Twitch Emails disabled")
         end
     end
@@ -361,34 +237,15 @@ if setupCorrect then
 
     ExecuteWithDelay(5000, function()
         RegisterHook("/Script/Engine.PlayerController:ClientRestart", function(Context, NewPawn)
-            if os.remove(config.files.emails_enable) then
-                print("Removed emails enable file")
-            end
+            os.remove(config.files.emails_enable)
             local emailHandler = FindFirstOf("emailHandler_C")
             if emailHandler:IsValid() then
-                print("Destroying emailHandler")
                 emailHandler:K2_DestroyActor()
             end
-            print("Emails disabled")
-            if os.remove(config.files.enable) then
-                print("Removed enable file")
-            end
-            print("Chaos Mod disabled")
+            os.remove(config.files.enable)
 
         end)
     end)
 
-    ExecuteWithDelay(5000, function()
-        local id1, id2
-        RegisterHook("/Game/objects/panel_SATconsole.panel_SATconsole_C:actionOptionIndex", function(Context, NewPawn)
-            if id1 and id2 then
-                UnregisterHook("/Game/Mods/ChaosMod/ModActor.ModActor_C:ToggleChaosMod", id1, id2)
-            end
-            id1, id2 = RegisterHook("/Game/Mods/ChaosMod/ModActor.ModActor_C:ToggleChaosMod", function()
-                toggleChaosMod()
-            end)
-        end)
-    end)
-
-    print("Twitch Chaos Mod and email handler loaded!")
+    print("[ChaosMod] Successfully loaded ChaosMod")
 end
