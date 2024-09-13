@@ -77,14 +77,16 @@ If you want to download the exe manually, or run from source, see below.
 6. Launch the game and configure settings from main menu
 
 
-7. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
+7. Launch the ChaosBot from main menu, which will automatically run in order priority: ChaosBot.exe, python Chaosbot.py 
+- Optionally, run the programs from pyChaosMod folder
 
-  
+Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* for proper functionality 
+
 
 ## Configuration
 
   
-  Use in-game configuration menu to change settings and set Twitch connection info
+  Use in-game configuration menu to change settings and set Twitch connection info.
 
   
 
