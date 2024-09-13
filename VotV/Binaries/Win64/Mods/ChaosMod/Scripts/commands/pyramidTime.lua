@@ -9,16 +9,12 @@ return {
         local Location = {X=1121.955, Y=648.347, Z=6185.325}
         local Rotation = {Pitch=0, Yaw=0, Roll=0}
         local SpawnedActor = World:SpawnActor(pyramid, Location, Rotation, false, nil, nil, false, false)
-        if SpawnedActor:IsValid() then
-            print("[MyLuaMod] Spawned pyramid")
-            local PreBeginPlay = SpawnedActor.ReceiveBeginPlay
-            if PreBeginPlay:IsValid() then
-                PreBeginPlay(SpawnedActor)
+        local randomTime = math.random(120000, 300000)
+        ExecuteWithDelay(randomTime, function()
+            if SpawnedActor:IsValid() then
+                SpawnedActor:Destroy()
             end
-            return true
-        else 
-            print("[MyLuaMod] Failed to spawn pyramid")
-            return false
-        end
+        end)
+        return true
     end
 }

@@ -1,11 +1,10 @@
 import re
 
 class MessageHandler:
-    def __init__(self, voting_system, email_system, shop_system, sound_manager):
+    def __init__(self, voting_system, email_system, shop_system):
         self.voting_system = voting_system
         self.email_system = email_system
         self.shop_system = shop_system
-        self.sound_manager = sound_manager
         
         self.chat_pattern = re.compile(r':(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(\d+)')
         self.email_pattern = re.compile(r':(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :!email subject:(.+)body:(.+)')
