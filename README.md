@@ -6,20 +6,16 @@
 ### Twitch Chaos Mod
 
   
-
 Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with over 80 different commands to vote for!
 
-  
+With version 2.0, ChaosMod now has automatic installation for the Twitch ChaosBot. A main menu button automatically downloads and runs a pre-built exe making installation a breeze. If you still want to run from source, it can automatically launch the python file for you. 
 
-This mod requires partial manual installation and will *not* work without the external Python program. Please read the instructions below for installation.
-
-You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) installed in Win64 folder. *Please read the instructions below for installation.*
-
+ChaosMod 2.0 also introduces a new built-in game UI, replacing the pyglet system - with in-game settings and main menu improvements! Other key additions include new commands, DataTables for commands and options, and the ability to disable "hard" commands. The update also features various command fixes, code organization, and more. See changelog for a more comprehensive review. 
   
 
 ## Features
 
-  
+- Built in automatic installation of Twitch bot
 
 - Twitch chat voting system
 
@@ -29,82 +25,55 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 
 - Email system and Shop system for viewer interaction
 
-- Overlay display for voting and results
+- Stylish In-game UI to display votes and ChaosMod status
 
   
 
 ### Community
 
   [GitHub Discussions](https://github.com/modestimpala/VotVChaosMod/discussions)
-  
-  Discord Thread
-  
-
-## r2modman Setup
 
   
 
-1. Ensure you have the following dependencies installed:
+## Automatic r2modman Setup
 
-- Python 3.x
+    
 
-- Pyglet library (pip install pyglet)
+1. Install ChaosMod and unreal-shimloader
+
+
+2. Get an OAuth bot token from https://twitchtokengenerator.com/
+
+
+3. Launch the game and configure settings from main menu
+
+
+4. Launch the ChaosBot from main menu, which will automatically download and extract a pre-built exe, then run it.
+
+If you want to download the exe manually, or run from source, see below.
+  
+
+## Manual r2modman Setup
 
   
 
-2. Install ChaosMod and unreal-shimloader
-
+1. Install ChaosMod and unreal-shimloader
   
 
-3. Download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) from GitHub releases
+2. Download [ChaosBot.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip) from GitHub releases
+- Optionally, download python source [src_pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/src_pyChaosMod.zip)
 
-  
-
-4. Navigate to active r2modman game directory, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
-
-  
-
-5. Place folder pyChaosMod into Win64 directory
-
-  
-
-6. Get an OAuth bot token from https://twitchtokengenerator.com/
-
-  
-
-7. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
-
-  
-
-## Manual Setup
-
-  
-
-1. Ensure you have the following dependencies installed:
-
-- Python 3.x
-
-- Pyglet library (pip install pyglet)
-
-- UE4SS (Unreal Engine 4 Scripting System)
-
-  
-
-2. Download [VotV.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/VotV.zip) from GitHub releases
-
-  
-
-3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\
-
-  
-
-4. Place folder VotV folder into WindowsNoEditor directory
+3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
 
 
-5. Ensure pyChaosMod is located in Win64 directory, if not, download [pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/1.0.2/pyChaosMod.zip) from GitHub releases
+4. Place ChaosBot.exe in a folder called "pyChaosMod" inside Win64 folder 
+- Optionally, extract python source into Win64 folder
 
 
-6. Get an OAuth bot token from https://twitchtokengenerator.com/
+5. Get an OAuth bot token from https://twitchtokengenerator.com/
+
+
+6. Launch the game and configure settings from main menu
 
 
 7. Edit `config.json` with your OAuth token and channel settings, changing settings as needed
@@ -114,78 +83,7 @@ You need [pyChaosMod](https://github.com/modestimpala/VotVChaosMod/releases/down
 ## Configuration
 
   
-
-Edit the `config.json` file to customize the mod settings:
-
-  
-
-```json
-
-{
-
-  {
-
-  "twitch": {
-
-    "server": "irc.chat.twitch.tv",
-
-    "port": 6667,
-
-    "oauth_token": "oauth:[your oath token]", -  fill  with  info  from  https://twitchtokengenerator.com/
-
-    "bot_username":  "[your bot username]",
-
-    "channel": "[your channel name]"
-
-  },
-
-  "voting": {
-
-    "duration": 30, -  how  long  voting  remains  active
-
-    "cooldown_min": 60, -  min  cooldown  time
-
-    "cooldown_max": 180, -  max  cooldown  time,  cooldown  time  is  a  random  time  inbetween  the  two
-
-    "num_options": 4, -  number  of  options  to  vote  for
-
-    "command_cooldown_rounds": 3, -  how  long  a  command  is  unavailable  after  winning
-
-    "reset_cooldown_after_rounds": 6, -  reset  all  cooldowns  after  a  certain  #  of  rounds
-
-    "combine_commands_chance": 0.1  -  how  often  commands  will  be  combined  with  another  command, 0.1  is  10%  chance
-
-  },
-
-    "emails": {
-
-    "enabled": true, -  set  to  false  to  completely  disable  email  system
-
-    "user_cooldown": 180  -  how  often  a  single  user  can  send  emails
-
-  },
-
-    "chatShop": {
-
-    "enabled": true, -  set  to  false  to  completely  disable  shop  system
-
-    "minOpenInterval": 180, -  min  open  interval
-
-    "maxOpenInterval": 600, -  max  open  interval,  open  time  will  occur  randomly  between  the  two  numbers
-
-    "openDuration": 30, -  how  long  the  shop  should  be  open
-
-    "announcementMessage": "The shop is now open for {duration} seconds!", -  the  twitch  broadcast  chat  message  to  let  users  know  the  shop  is  open
-
-    "userCooldown": 180  -  how  often  a  single  user  can  shop  for  items
-
-  }
-
-}
-
-Do not change files section.
-
-```
+  Use in-game configuration menu to change settings and set Twitch connection info
 
   
 
@@ -196,10 +94,13 @@ Do not change files section.
 1. Start your game with UE4SS enabled, through r2modman or manual setup.
 
 
-2. Run `run.bat` or `python ./main.py` inside pyChaosMod dir to start the overlay and Twitch integration.
+2. Launch ChaosBot from main menu
+- Optionally, launch exe or .py file manually from pyChaosMod folder
 
 
-3. In-game controls:
+3. Either pause the game or open inventory to see buttons to toggle the mod and other functions
+
+Optional In-game keybinds:
 
 - F8: Toggle Chaos Mod on/off
 
@@ -216,30 +117,18 @@ Do not change files section.
   
 
 5. If enabled, viewers can use the `!email` command to send in-game emails.
-
+- Format: !email subject:[subject] body:[body]
   
 
-6. If the shop system is enabled, viewers can use the `!shop` command to place orders when the shop is open. This will deduct Points.
-
+6. If the shop system is enabled, viewers can use the `!shop` command to place orders when the shop is open. This will deduct Points if enabled.
+- [Shop items list](https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt)
   
 
 # Overlay
 
   
 
-Overlay will not display over Fullscreen game. You will have to either run it in windowed mode (Ctrl+Enter to change) or rely on Overlay seen on OBS.
-
-  
-
-I think it would be better to run the game Fullscreen so you don't immediately see what people are voting for.
-
-  
-
-Add a new Game Capture and target "[python.exe] .\main.py", right click on it and go to properties and enable "Allow Transparency" and "Premultiplied Alpha", then add a Color Source behind the Overlay that's light grey or something with an alpha source of ~155
-
-  
-
-Configure OBS to pick up "[python.exe] .\twitchChaos.py" audio.
+Overlay is now built into the game, no configuration needed. 
 
   
 
@@ -447,6 +336,10 @@ Twitch Shopping Showcase
 - waspAttack
 
 - wispTeleport
+
+- fullSleep
+
+- healPlayer
 
   
   
