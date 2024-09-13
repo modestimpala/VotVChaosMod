@@ -68,6 +68,7 @@ If you want to download the exe manually, or run from source, see below.
 
 4. Place ChaosBot.exe in a folder called "pyChaosMod" inside Win64 folder 
 - Optionally, extract python source into Win64 folder
+- Python source requires psutil package (pip install psutil)
 
 
 5. Get an OAuth bot token from https://twitchtokengenerator.com/
@@ -91,7 +92,7 @@ If you want to download the exe manually, or run from source, see below.
 
   
 
-1. Start your game with UE4SS enabled, through r2modman or manual setup.
+1. Start your game with mods enabled, through r2modman or manual setup.
 
 
 2. Launch ChaosBot from main menu
