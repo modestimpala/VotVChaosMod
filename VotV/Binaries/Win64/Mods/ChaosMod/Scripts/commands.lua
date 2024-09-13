@@ -1,44 +1,60 @@
 local json = require("json")  -- Load JSON library
 local UEHelpers = require("UEHelpers")  -- Load UEHelpers
 
--- Define the base path
+-- Define the base paths
 local base_path = "./pyChaosMod/"
-local config_file = base_path .. "config.json"
 
-local setupCorrect = false
-local f = io.open(config_file, "r")
-if f then 
-    f:close()
-    print("[ChaosMod] Found config file")
-    setupCorrect = true
+-- Function to read config files
+local function readConfig(filename)
+    local config = {}
+    local file = io.open(base_path .. filename, "r")
+    if file then
+        for line in file:lines() do
+            local key, value = line:match("([^=]+)=(.+)")
+            if key and value then
+                key = key:gsub("%s+", "")
+                value = value:gsub("%s+", "")
+                if value == "true" then
+                    config[key] = true
+                elseif value == "false" then
+                    config[key] = false
+                elseif tonumber(value) then
+                    config[key] = tonumber(value)
+                else
+                    config[key] = value
+                end
+            end
+        end
+        file:close()
+    end
+    return config
 end
 
-if not setupCorrect then
-    print("You do not have ChaosMod installed correctly. Please follow the instructions in the README.md")
-    LoopAsync(10000, function()
-        local notInstalled = FindFirstOf("chaosNotInstalledCorrectly_C")
-        if not notInstalled:IsValid() then
-            local World = UEHelpers:GetWorld()
-            local obj = StaticFindObject("/Game/Mods/ChaosMod/Assets/chaosNotInstalledCorrectly.chaosNotInstalledCorrectly_C")
-            notInstalled = World:SpawnActor(obj, {}, {})
-        end
-    end)
+-- Check if setup is correct
+local setupCorrect = io.open(base_path .. "chatShop.cfg", "r") ~= nil
+
+if setupCorrect then
+    print("[ChaosMod] Found config files")
+else
+    print("[ChaosMod] Config files not found")
     return
 end
 
 -- Load configurations
-local config_file = io.open(config_file, "r")
-local config = json.decode(config_file:read("*all"))
-config_file:close()
+local config = {
+    chatShop = readConfig("chatShop.cfg"),
+    emails = readConfig("emails.cfg"),
+    twitch = readConfig("twitch.cfg"),
+    voting = readConfig("voting.cfg")
+}
 
--- Prepend base_path to all file paths in config
-for key, value in pairs(config.files) do
-    config.files[key] = base_path .. value
-end
-
-local commands_file = io.open(config.files.commands, "r")
-local commands_config = json.decode(commands_file:read("*all"))
-commands_file:close()
+-- Define file paths
+config.files = {
+    enable = base_path .. "enable.txt",
+    emails_enable = base_path .. "emails_enable",
+    emails_master = base_path .. "emails_master.json",
+    shops_master = base_path .. "shops_master.json"
+}
 
 local command_modules = {}
 
@@ -68,28 +84,16 @@ end
 
 function ExecuteCommand(commandName)
     print("Executing command: " .. commandName)
-    local command = nil
-    for _, cmd in ipairs(commands_config.commands) do
-        if cmd.command == commandName then
-            command = cmd
-            break
-        end
-    end
 
-    if not command then
-        print("Command not found: " .. commandName)
-        return
-    end
-
-    local module = load_command_module(command.command)
+    local module = load_command_module(commandName)
     if module and module.execute then
         ExecuteInGameThread(function()
             module.execute()
-            Hint(command.trigger_text)
         end)
     else
-        print("Failed to execute command: " .. command.command)
+        print("Failed to execute command: " .. commandName)
     end
 end
 
--- Rest of your script...
+-- Moddy 2024
+-- Licensed under Creative Commons Attribution 4.0 International License

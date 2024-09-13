@@ -9,11 +9,10 @@ return {
         local mainGamemode_C = FindFirstOf("mainGamemode_C")
         if mainGamemode_C:IsValid() then
             local save = mainGamemode_C.saveSlot
-            local points = 0
+
             if save:IsValid() then
-                points = save.points
+                save.sleep = 100
             end
-            mainGamemode_C:AddPoints(points * 2)
         end
         return true
     end

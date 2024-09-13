@@ -17,9 +17,10 @@ return {
         local fOut = {}
         local bFoundRandomLocation = navSystem:K2_GetRandomReachablePointInRadius(World, Location, fOut, 5000, nil, nil)
         if bFoundRandomLocation then
+            local spawnLoc = {X = fOut.X, Y = fOut.Y, Z = fOut.Z + 20}
             print("Found random location: {X=" .. fOut.X .. ", Y=" .. fOut.Y .. ", Z=" .. fOut.Z .. "}")
             local lib_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/nextbot_Jerma.nextbot_Jerma_C")
-            local lib = World:SpawnActor(lib_C, fOut, {Pitch=0, Yaw=0, Roll=0}, false, nil, nil, false, false)
+            local lib = World:SpawnActor(lib_C, spawnLoc, {Pitch=0, Yaw=0, Roll=0}, false, nil, nil, false, false)
 
             lib:PostBeginPlay()
         else

@@ -12,6 +12,7 @@ return {
         local fOut = {}
         local mainGamemode_C = FindFirstOf("mainGamemode_C")
         mainGamemode_C.backroomsEnabled = false
+        Pawn:unsit()
         Pawn:K2_SetActorLocation(Location, false, fOut, false)
         ExecuteWithDelay(1000, function()
             mainGamemode_C.backroomsEnabled = true
