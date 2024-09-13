@@ -137,7 +137,11 @@ Overlay is now built into the game, no configuration needed.
 
 # Showcase
 
-  
+![image](https://github.com/user-attachments/assets/7d0ec698-d2c9-4774-989c-850344bb03f4) ![image](https://github.com/user-attachments/assets/981ed31e-2923-4a90-9d96-f2166d46d643)
+
+
+![image](https://github.com/user-attachments/assets/f10e6374-b36c-440b-92c9-1c3cd57a16ae)
+
 
 https://github.com/user-attachments/assets/4adc4bad-de7b-4fab-8a11-432bc1a9cb42
 
