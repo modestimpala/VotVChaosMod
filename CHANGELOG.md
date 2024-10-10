@@ -1,3 +1,26 @@
+# 2.5.0
+ Even more overhaul work.
+
+ - Added:
+	- Offline Mode
+		- Offline mode runs without the external program and randomly executes commands based on configurable options, every set time period it has a chance of running a random command
+	- Configurable voting and offline options
+		- Each command can now be individually toggled to appear during voting or in offline mode
+    - Option to disable voting ticker sound
+	- 18 new commands!
+    - Debug mode to trigger desired chaos commands manually 
+    - Automatic updating of ChaosBot
+- Changed:
+	- Twitch Bot rework, now uses TwitchIO library
+	- Improved Bot Logging
+	- Moved several Lua based commands to Blueprints, work will continue to migrate Lua to Blueprints for increased stability
+- Fixed:
+	- Voting issue where the lowest option would be picked regardless of number of votes
+	- Timescale issue, timers are now paused when sleeping or timescale is fast
+	- External Lua scripts not working, hopefully this issue did not affect the Lua Commands, but ExecuteCommand errors should be resolved
+- Removed:
+ 	- FastTimeScale command
+
 # 2.0.0
 
 Large overhaul. 

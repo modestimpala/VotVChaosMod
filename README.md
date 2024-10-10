@@ -1,39 +1,55 @@
 
-# VotVChaosMod
+<p align="center" width="100%">
+    <img src="https://www.dropbox.com/scl/fi/czranvxdkilts94vo4ru0/chaos-banner.png?rlkey=02vfpe08u637j2q2rsghklu6g&st=vsp8apzf&dl=1">
+</p>
 
-  
+
+<p align="center" width="100%">
+<a href="https://discord.gg/pZFR4sES"><img width="5%" src="https://www.dropbox.com/scl/fi/96uoyd529gq617880m0cu/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png?rlkey=343xgtya1h3r53bblx8lns473&st=ih0q2alh&dl=1"></a>
+</p>
 
 ### Twitch Chaos Mod
 
   
-Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with over 80 different commands to vote for!
+Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with 100 different commands to vote for!
 
-With version 2.0, ChaosMod now has automatic installation for the Twitch ChaosBot. A main menu button automatically downloads and runs a pre-built exe making installation a breeze. If you still want to run from source, it can automatically launch the python file for you. 
+Version 2.5 introduces a brand new Offline Mode that runs without Twitch Integration. When enabled, it will randomly run commands based on configurable options.
 
-ChaosMod 2.0 also introduces a new built-in game UI, replacing the pyglet system - with in-game settings and main menu improvements! Other key additions include new commands, DataTables for commands and options, and the ability to disable "hard" commands. The update also features various command fixes, code organization, and more. See changelog for a more comprehensive review. 
+You can now configure each option individually to be enabled in Twitch Voting or Offline Mode. 
+
+Additionally, the Twitch Bot was overhauled to be much more stable, many commands were reworked into blueprints, 18 new commands were added, and several issues with voting and overall functionality were fixed. 
+
+See changelog for more specific changes.
+
+ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button automatically downloads and runs a pre-built exe making installation a breeze. If you still want to run from source, it can automatically launch the python file for you. 
+
+**If you encounter any issues, *please* report them in the Discord channel or Github issues.** ChaosBot now has improved logging, so please include the log file (VotV\Binaries\Win64\pyChaosMod\logs or VotV\Binaries\Win64\logs) when submitting Twitch issues for easier troubleshooting. 
   
 
 ## Features
 
-- Built in automatic installation of Twitch bot
-
 - Twitch chat voting system
+
+- Offline Mode that randomly runs commands without Twitch Integration
+
+- Built in automatic installation of Twitch bot
 
 - Randomized chaos effects, including custom assets
 
-- Customizable voting duration and cooldown
+- Highly Customizable
 
-- Email system and Shop system for viewer interaction
+- Email system and Shop system for viewer interaction - users can send emails to the in-game computer and order items from the shop 
 
 - Stylish In-game UI to display votes and ChaosMod status
 
   
 
-### Community
+## Community
 
   [GitHub Discussions](https://github.com/modestimpala/VotVChaosMod/discussions)
 
-  
+  [Discord](https://discord.gg/pZFR4sES)
+
 
 ## Automatic r2modman Setup
 
@@ -61,14 +77,14 @@ If you want to download the exe manually, or run from source, see below.
   
 
 2. Download [ChaosBot.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip) from GitHub releases
-- Optionally, download python source [src_pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/src_pyChaosMod.zip)
+    - Optionally, download python source [src_pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/src_pyChaosMod.zip)
 
 3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
 
 
 4. Place ChaosBot.exe in a folder called "pyChaosMod" inside Win64 folder 
-- Optionally, extract python source into Win64 folder
-- Python source requires psutil package (pip install psutil)
+    - Optionally, extract python source into Win64 folder
+    - Python source requires psutil package (pip install psutil)
 
 
 5. Get an OAuth bot token from https://twitchtokengenerator.com/
@@ -78,7 +94,7 @@ If you want to download the exe manually, or run from source, see below.
 
 
 7. Launch the ChaosBot from main menu, which will automatically run in order priority: ChaosBot.exe, python Chaosbot.py 
-- Optionally, run the programs from pyChaosMod folder
+    - Optionally, run the programs from pyChaosMod folder
 
 Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* for proper functionality 
 
@@ -98,20 +114,20 @@ Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* f
 
 
 2. Launch ChaosBot from main menu
-- Optionally, launch exe or .py file manually from pyChaosMod folder
+    - Optionally, launch exe or .py file manually from pyChaosMod folder
 
 
 3. Either pause the game or open inventory to see buttons to toggle the mod and other functions
 
-Optional In-game keybinds:
+    Optional In-game keybinds:
 
-- F8: Toggle Chaos Mod on/off
+      - F8: Toggle Chaos Mod on/off
 
-- F7: Manually trigger voting
+      - F7: Manually trigger voting
 
-- F6: Clear active events, to allow saving and pausing if disabled
+      - F6: Clear active events, to allow saving and pausing if disabled
 
-- F3: Toggle email system (if enabled)
+      - F3: Toggle email system (if enabled)
 
   
 
@@ -120,19 +136,11 @@ Optional In-game keybinds:
   
 
 5. If enabled, viewers can use the `!email` command to send in-game emails.
-- Format: !email subject:[subject] body:[body]
+    - Format: !email subject:[subject] body:[body]
   
 
 6. If the shop system is enabled, viewers can use the `!shop` command to place orders when the shop is open. This will deduct Points if enabled.
-- [Shop items list](https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt)
-  
-
-# Overlay
-
-  
-
-Overlay is now built into the game, no configuration needed. 
-
+    - [Shop items list](https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt)
   
 
 # Showcase
@@ -145,11 +153,6 @@ Overlay is now built into the game, no configuration needed.
 
 https://github.com/user-attachments/assets/4adc4bad-de7b-4fab-8a11-432bc1a9cb42
 
-  
-
-Chaos Showcase
-
-  
   
 
 https://github.com/user-attachments/assets/9d8f602b-c36d-4a8f-b708-261537f7ef94
@@ -172,183 +175,107 @@ Twitch Shopping Showcase
 
 <summary>Current List of Commands (spoilers)</summary>
 
-  
 
-
-
-
-
-- 500cigs
-
-- addEnergy
-
-- badSun
-
-- baseRave
-
-- bigKel
-
-- bigKerfurs
-
-- bigLakeFish
-
-- blackFog
-
-- breakRandomGenerator
-
-- breakRandomServers
-
-- caltropsTrap
-
-- deleteActiveSignal
-
-- doublePoints
-
-- drainSleep
-
-- evilEriePlush
-
-- explodeAllATVs
-
-- explodePlayer
-
-- fastTimeScale
-
-- fishSplosion
-
-- fixAllATVs
-
-- fixGenerators
-
-- forceServerMinigame
-
-- forceSleep
-
-- freeBattery
-
-- freeMoney
-
-- fullTummy
-
-- garbageDay
-
-- halfPoints
-
-- hulkMode
-
-- ignitePlayer
-
-- immortalForTime
-
-- insaneATVs
-
-- jellyFishTime
-
-- jumpscareComputer
-
-- kerfurYeet
-
-- killAllKerfurs
-
-- laserSpam
-
-- lowGravity
-
-- lsdEffect
-
-- madnessCombat
-
-- maxwellBomb
-
-- nauseaEffect
-
-- nextbotCharborg
-
-- nextbotGlorpFriend
-
-- nextbotJerma
-
-- nextbotWalter
-
-- normalATVs
-
-- ohFiddlesticks
-
-- orderBanana
-
-- orderCheese
-
-- orderDrives
-
-- orderPizza
-
-- orderRadio
-
-- orderShrimp
-
-- orderTV
-
+- randomEvent
+- hiccups
+- fling
+- rainbowATV
+- fossilHounds
+- stickDrift
+- earthquake
+- dirtyWindow
+- explodeFridge
+- bigRoach
+- 5ghorse
+- cataracts
+- magneticEffect
+- flipCamera
+- vomit
+- pukeDrive
+- vomitRandomItem
+- pukeStream
 - pyramidTime
-
-- ragdollPlayer
-
-- randomDream
-
+- kerfurYeet
 - redSky
-
-- skyFallingEvent
-
-- smoke500cigs
-
-- smokeCig
-
-- spamFlashlight
-
-- spawnATV
-
-- spawnFunGuy
-
-- spawnKavotia
-
+- killAllKerfurs
 - spawnKerfurs
-
-- spawnMaxwell
-
-- spawnMeatball
-
-- spawnMeatballFood
-
-- spawnSonicGun
-
-- spawnZeroGun
-
-- starvePlayer
-
-- superSpeed
-
-- takePicture
-
+- ignitePlayer
 - teleportRadioTower
-
-- teleportToBaseBalcony
-
-- teleportTopOfBase
-
 - teleportTurbine
-
-- tinyKel
-
-- tinyKerfurs
-
+- ragdollPlayer
+- superSpeed
+- hulkMode
+- smokeCig
+- 500cigs
+- explodePlayer
+- badSun
+- blackFog
+- jellyFishTime
+- spawnMeatball
+- lowGravity
+- spawnZeroGun
+- spawnSonicGun
+- freeMoney
+- skyFallingEvent
 - waspAttack
-
+- laserSpam
+- caltropsTrap
+- spawnMeatballFood
+- spawnMaxwell
+- spawnKavotia
 - wispTeleport
-
+- spawnATV
+- insaneATVs
+- explodeAllATVs
+- fixAllATVs
+- smoke500cigs
+- deleteActiveSignal
+- randomDream
+- forceSleep
+- takePicture
+- starvePlayer
+- fullTummy
+- doublePoints
+- halfPoints
+- nauseaEffect
+- lsdEffect
+- teleportToBaseBalcony
+- teleportTopOfBase
+- evilEriePlush
+- immortalForTime
+- bigKel
+- tinyKel
+- tinyKerfurs
+- bigKerfurs
+- baseRave
+- fishSplosion
+- bigLakeFish
+- ohFiddlesticks
+- forceServerMinigame
+- breakRandomServers
+- breakRandomGenerator
+- fixGenerators
+- garbageDay
+- spamFlashlight
+- madnessCombat
+- maxwellBomb
+- drainSleep
+- addEnergy
+- nextbotCharborg
+- nextbotJerma
+- nextbotWalter
+- nextbotGlorpFriend
+- jumpscareComputer
+- freeBattery
+- orderShrimp
+- orderDrives
+- orderPizza
+- orderTV
+- orderRadio
+- orderBanana
+- orderCheese
 - fullSleep
-
 - healPlayer
-
-  
   
 
 </details>
