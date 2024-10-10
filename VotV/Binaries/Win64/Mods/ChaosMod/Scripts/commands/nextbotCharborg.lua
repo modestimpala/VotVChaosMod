@@ -19,7 +19,7 @@ return {
         if bFoundRandomLocation then
             local spawnLoc = {X = fOut.X, Y = fOut.Y, Z = fOut.Z + 20}
             print("Found random location: {X=" .. fOut.X .. ", Y=" .. fOut.Y .. ", Z=" .. fOut.Z .. "}")
-            local lib_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/nextbot_callingCharborg.nextbot_callingCharborg_C")
+            local lib_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Nextbots/nextbot_callingCharborg.nextbot_callingCharborg_C")
             local lib = World:SpawnActor(lib_C, spawnLoc, {Pitch=0, Yaw=0, Roll=0}, false, nil, nil, false, false)
 
             lib:PostBeginPlay()

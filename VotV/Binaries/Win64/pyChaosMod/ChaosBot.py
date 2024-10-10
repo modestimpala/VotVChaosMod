@@ -1,5 +1,6 @@
+import os
+import signal
 import sys
-import time
 import psutil
 from src.twitch_connection import TwitchConnection
 from src.message_handler import MessageHandler
@@ -7,6 +8,44 @@ from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
 from src.utils import load_config
+import asyncio
+import traceback
+import logging
+from logging.handlers import RotatingFileHandler
+
+def setup_logging():
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    # Create logs directory if it doesn't exist
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Create file handler which logs even debug messages
+    file_handler = RotatingFileHandler(
+        filename=os.path.join(log_dir, 'chaosbot.log'),
+        maxBytes=5*1024*1024,  # 5MB
+        backupCount=5
+    )
+    file_handler.setLevel(logging.DEBUG)
+
+    # Create console handler with a higher log level
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # Create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Add the handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
 
 def is_already_running():
     current_process = psutil.Process()
@@ -30,35 +69,73 @@ def is_already_running():
             pass
     return False
 
-def main():
-    print("Starting ChaosBot")
-    print("Loading config")
+async def shutdown(twitch_connection, signal_received=None):
+    if signal_received:
+        logger.info(f"Received signal {signal_received}. Shutting down gracefully...")
+    else:
+        logger.info("Shutting down gracefully...")
+    
+    try:
+        await twitch_connection.close()
+    except Exception as e:
+        logger.error(f"Error during Twitch connection closure: {e}")
+    logger.info("ChaosBot has been shut down.")
+
+async def main():
+    logger.info("Starting ChaosBot")
+    logger.info("Loading config")
     config = load_config()
    
-    print("Establishing subsystems")
-    twitch_connection = TwitchConnection(config)
-    while not twitch_connection.is_connected_to_twitch():
-        print("Waiting for Twitch connection...")
-        time.sleep(1)
-    print("Connected to Twitch!")
-    email_system = EmailSystem(config, twitch_connection)
-    shop_system = ShopSystem(config, twitch_connection)
+    logger.info("Establishing subsystems")
+    
+    email_system = EmailSystem(config)
+    shop_system = ShopSystem(config)
     voting_system = VotingSystem(config)
    
-    message_handler = MessageHandler(voting_system, email_system, shop_system)
-   
-    print("Starting main loop, press Ctrl+C to exit")
-    print("ChaosBot is now running, press F8 in game to start the chaos! Press F7 to manually trigger voting.")
-    while True:
-        messages = twitch_connection.get_messages()
-        for message in messages:
-            message_handler.handle_message(message)
-       
-        voting_system.update()
-        shop_system.update()
-        email_system.update()
-       
-        time.sleep(1/15)  # Update at 15 FPS
+    twitch_connection = TwitchConnection(config, voting_system, email_system, shop_system)
+
+    logger.info("Starting Twitch Connection")
+
+    shutdown_event = asyncio.Event()
+    
+    def signal_handler(sig, frame):
+        logger.info(f"Received signal {sig}")
+        shutdown_event.set()
+
+    # Set up signal handlers
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, signal_handler)
+
+    try:
+        twitch_task = asyncio.create_task(twitch_connection.start())
+        shutdown_task = asyncio.create_task(shutdown_event.wait())
+
+        done, pending = await asyncio.wait(
+            [twitch_task, shutdown_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+
+        if shutdown_task in done:
+            logger.info("Shutdown event received, closing Twitch connection...")
+            twitch_task.cancel()
+            try:
+                await twitch_task
+            except asyncio.CancelledError:
+                pass
+        
+        for task in pending:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+    except Exception as e:
+        logger.error(f"An error occurred during bot execution: {e}")
+        logger.error("Full traceback:")
+        traceback.print_exc()
+    finally:
+        await shutdown(twitch_connection)
 
 if __name__ == "__main__":
     if is_already_running():
@@ -69,9 +146,14 @@ if __name__ == "__main__":
         print("Continuing with multiple instances...")
     
     try:
-        main()
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass  # This is handled by the signal handler now
     except Exception as e:
-        print(f"An error occurred: {e}")
-        print("Press Enter to exit...")
-        input()  # This will pause the program until the user presses Enter
-        sys.exit(1)  # Exit with a non-zero status code to indicate an error
+        logger.error(f"An error occurred: {e}")
+        logger.error("Full traceback:")
+        traceback.print_exc()
+        input() # Wait for user input before closing
+    finally:
+        logger.info("ChaosBot has exited.")
+        sys.exit(0)  # Exit with a zero status code for normal exit

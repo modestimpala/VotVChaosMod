@@ -1,3 +1,4 @@
+import logging
 import time
 import os
 
@@ -12,6 +13,8 @@ class VotingSystem:
         self.votes_file = config['files']['votes']
         self.last_write_time = 0
         self.write_interval = 1  # Write every 1 second
+
+        self.logger = logging.getLogger(__name__)
 
     def check_voting_status(self):
         if os.path.exists(self.is_voting_file):
@@ -36,11 +39,19 @@ class VotingSystem:
     def write_votes_to_file(self):
         current_time = time.time()
         if current_time - self.last_write_time >= self.write_interval:
-            with open(self.votes_file, 'w') as f:
-                for num, command in self.current_options:
-                    votes = self.votes.get(num, 0)
-                    f.write(f"{num};{command}={votes}\n")
-            self.last_write_time = current_time
+            try:
+                with open(self.votes_file, 'w') as f:
+                    for num, command in self.current_options:
+                        votes = self.votes.get(num, 0)
+                        line = f"{num};{command}={votes}\n"
+                        f.write(line)
+                self.last_write_time = current_time
+            except IOError as e:
+                self.logger.error(f"Failed to write votes to file: {self.votes_file}")
+                self.logger.error(f"IOError: {str(e)}")
+            except Exception as e:
+                self.logger.error(f"Unexpected error while writing votes to file: {self.votes_file}")
+                self.logger.error(f"Error: {str(e)}")
 
     def process_vote(self, username, vote):
         if self.voting_active and vote in [num for num, _ in self.current_options] and username not in self.voters:
@@ -53,11 +64,13 @@ class VotingSystem:
        
         if is_voting and not self.voting_active:
             # Voting just started
+            self.logger.debug("Voting opened")
             self.voting_active = True
             self.read_voting_options()
             self.voters.clear()
         elif not is_voting and self.voting_active:
             # Voting just ended
+            self.logger.debug("Voting closed")
             self.voting_active = False
             self.voters.clear()
 

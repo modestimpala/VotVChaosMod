@@ -13,7 +13,7 @@ return {
         end
         
 
-        local obj_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/computerJumpscare.computerJumpscare_C")
+        local obj_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Effects/computerJumpscare.computerJumpscare_C")
         local obj = World:SpawnActor(obj_C, {X=0, Y=0, Z=0}, {Pitch=0, Yaw=0, Roll=0}, false, nil, nil, false, false)
     
         return true
