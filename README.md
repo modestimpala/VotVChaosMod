@@ -5,7 +5,7 @@
 
 
 <p align="center" width="100%">
-<a href="https://discord.gg/pZFR4sES"><img width="5%" src="https://www.dropbox.com/scl/fi/96uoyd529gq617880m0cu/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png?rlkey=343xgtya1h3r53bblx8lns473&st=ih0q2alh&dl=1"></a>
+<a href="https://discord.gg/Bq7HCMRfjk"><img width="5%" src="https://www.dropbox.com/scl/fi/96uoyd529gq617880m0cu/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png?rlkey=343xgtya1h3r53bblx8lns473&st=ih0q2alh&dl=1"></a>
 </p>
 
 ### Twitch Chaos Mod
@@ -48,7 +48,7 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 
   [GitHub Discussions](https://github.com/modestimpala/VotVChaosMod/discussions)
 
-  [Discord](https://discord.gg/pZFR4sES)
+  [Discord](https://discord.gg/Bq7HCMRfjk)
 
 
 ## Automatic r2modman Setup
