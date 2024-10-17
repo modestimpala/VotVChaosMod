@@ -1,100 +1,101 @@
-pyramidTime
-kerfurYeet
-redSky
-killAllKerfurs
-spawnKerfurs
-ignitePlayer
-teleportRadioTower
-teleportTurbine
-ragdollPlayer
-superSpeed
-hulkMode
-smokeCig
-500cigs
-explodePlayer
-badSun
-blackFog
-jellyFishTime
-spawnMeatball
-lowGravity
-spawnZeroGun
-spawnSonicGun
-freeMoney
-skyFallingEvent
-waspAttack
-laserSpam
-caltropsTrap
-spawnMeatballFood
-spawnMaxwell
-spawnKavotia
-wispTeleport
-spawnATV
-insaneATVs
-explodeAllATVs
-fixAllATVs
-smoke500cigs
-deleteActiveSignal
-randomDream
-forceSleep
-takePicture
-starvePlayer
-fullTummy
-doublePoints
-halfPoints
-nauseaEffect
-lsdEffect
-teleportToBaseBalcony
-teleportTopOfBase
-evilEriePlush
-immortalForTime
-bigKel
-tinyKel
-tinyKerfurs
-bigKerfurs
-baseRave
-fishSplosion
-bigLakeFish
-ohFiddlesticks
-forceServerMinigame
-breakRandomServers
-breakRandomGenerator
-fixGenerators
-garbageDay
-spamFlashlight
-madnessCombat
-maxwellBomb
-drainSleep
-addEnergy
-nextbotCharborg
-nextbotJerma
-nextbotWalter
-nextbotGlorpFriend
-jumpscareComputer
-freeBattery
-orderShrimp
-orderDrives
-orderPizza
-orderTV
-orderRadio
-orderBanana
-orderCheese
-fullSleep
-healPlayer
-randomEvent
-hiccups
-fling
-rainbowATV
-fossilHounds
-stickDrift
-earthquake
-dirtyWindow
-explodeFridge
-bigRoach
-5ghorse
-cataracts
-magneticEffect
-flipCamera
-vomit
-pukeDrive
-vomitRandomItem
-pukeStream
+
+- pyramidTime
+- kerfurYeet
+- redSky
+- killAllKerfurs
+- spawnKerfurs
+- ignitePlayer
+- teleportRadioTower
+- teleportTurbine
+- ragdollPlayer
+- superSpeed
+- hulkMode
+- smokeCig
+- 500cigs
+- explodePlayer
+- badSun
+- blackFog
+- jellyFishTime
+- spawnMeatball
+- lowGravity
+- spawnZeroGun
+- spawnSonicGun
+- freeMoney
+- skyFallingEvent
+- waspAttack
+- laserSpam
+- caltropsTrap
+- spawnMeatballFood
+- spawnMaxwell
+- spawnKavotia
+- wispTeleport
+- spawnATV
+- insaneATVs
+- explodeAllATVs
+- fixAllATVs
+- smoke500cigs
+- deleteActiveSignal
+- randomDream
+- forceSleep
+- takePicture
+- starvePlayer
+- fullTummy
+- doublePoints
+- halfPoints
+- nauseaEffect
+- lsdEffect
+- teleportToBaseBalcony
+- teleportTopOfBase
+- evilEriePlush
+- immortalForTime
+- bigKel
+- tinyKel
+- tinyKerfurs
+- bigKerfurs
+- baseRave
+- fishSplosion
+- bigLakeFish
+- ohFiddlesticks
+- forceServerMinigame
+- breakRandomServers
+- breakRandomGenerator
+- fixGenerators
+- garbageDay
+- spamFlashlight
+- madnessCombat
+- maxwellBomb
+- drainSleep
+- addEnergy
+- nextbotCharborg
+- nextbotJerma
+- nextbotWalter
+- nextbotGlorpFriend
+- jumpscareComputer
+- freeBattery
+- orderShrimp
+- orderDrives
+- orderPizza
+- orderTV
+- orderRadio
+- orderBanana
+- orderCheese
+- fullSleep
+- healPlayer
+- randomEvent
+- hiccups
+- fling
+- rainbowATV
+- fossilHounds
+- stickDrift
+- earthquake
+- dirtyWindow
+- explodeFridge
+- bigRoach
+- 5ghorse
+- cataracts
+- magneticEffect
+- flipCamera
+- vomit
+- pukeDrive
+- vomitRandomItem
+- pukeStream
