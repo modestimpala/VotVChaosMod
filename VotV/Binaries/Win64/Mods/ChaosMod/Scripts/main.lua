@@ -705,7 +705,7 @@ local function processNewEmails()
                 emailHandler = World:SpawnActor(emailHandler_C, {}, {})
             end
             if emailHandler and emailHandler:IsValid() then
-                local fullBody = email.body .. " - " .. email.username
+                local fullBody = email.body
                 emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
             end
             email.processed = true
@@ -887,6 +887,18 @@ RegisterKeyBind(Key.F6, function() clearEvents() end)
 if config.emails.enabled then
     RegisterKeyBind(Key.F3, function() toggleEmails() end)
 end
+
+emailsEnabled = config.emails.enabled
+
+local emailfile = io.open(config.files.emails_enable, "w")
+emailfile:write("true")
+emailfile:close()
+LoopAsync(1000, function()
+    if not emailsEnabled then
+        return true
+    end
+    processNewEmails()
+end)
 
 -- Main loop using loopasync
 LoopAsync(math.floor(1000 / 30), function()

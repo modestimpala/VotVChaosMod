@@ -28,6 +28,13 @@ class TwitchConnection(commands.Bot):
 
         self.logger.info("Initializing Twitch Connection...")
 
+        self.commands_list = []
+
+        #load commands from command_list.txt
+        with open("command_list.txt", "r") as f:
+            for line in f:
+                self.commands_list.append(line.strip())
+
         if self.config['twitch']['oauth_token'] == 'notset' or self.config['twitch']['bot_username'] == 'notset' or self.config['twitch']['channel'] == 'notset':
             raise ValueError("Twitch OAuth token, bot username, or channel not set in config file")
         
@@ -84,9 +91,9 @@ class TwitchConnection(commands.Bot):
         if ctx.echo:
             return
         await self.handle_commands(ctx)
-        self.vote_pattern.search(ctx.content)
-        if self.vote_pattern.search(ctx.content):
-            self.voting_system.process_vote(ctx.author.name, int(ctx.content))
+        #self.vote_pattern.search(ctx.content)
+        #if self.vote_pattern.search(ctx.content):
+            #self.voting_system.process_vote(ctx.author.name, int(ctx.content))
 
     async def reply(self, ctx, message):
         await ctx.reply(message)
@@ -100,6 +107,19 @@ class TwitchConnection(commands.Bot):
         while not self.message_queue.empty():
             messages.append(self.message_queue.get())
         return messages
+
+    @commands.command()
+    async def activate(self, ctx, effect : str | None):
+        if effect is None:
+            await ctx.reply("To activate an effect, type !activate <effect>.")
+            return
+        if effect not in self.commands_list:
+            await ctx.reply(f"Effect {effect} not found.")
+            return
+        #wipe command.txt and write the effect to it
+        with open("command.txt", "w") as f:
+            f.write(effect)
+
 
     @commands.command()
     async def shop(self, ctx, item : str | None):
