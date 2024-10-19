@@ -1,2 +1,8 @@
 Release.zip
 VotV.zip
+.\VotV\Binaries\Win64\pyChaosMod\build\*
+.\VotV\Binaries\Win64\pyChaosMod\dist\*
+.\VotV\Binaries\Win64\pyChaosMod\logs\*
+.\VotV\Binaries\Win64\pyChaosMod\src\__pycache__\*
+.\VotV\Binaries\Win64\pyChaosMod\*.toc
+.\VotV\Binaries\Win64\pyChaosMod\*.toc

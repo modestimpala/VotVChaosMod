@@ -82,6 +82,7 @@ async def shutdown(twitch_connection, signal_received=None):
     logger.info("ChaosBot has been shut down.")
 
 async def main():
+    logger.info("ChaosBot Direct Commands ver. for Spirit")
     logger.info("Starting ChaosBot")
     logger.info("Loading config")
     config = load_config()

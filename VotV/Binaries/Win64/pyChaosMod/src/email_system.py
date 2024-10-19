@@ -16,20 +16,8 @@ class EmailSystem:
         self.twitch_connection = twitch_connection
 
     async def process_email(self, username, subject, body, ctx):
-        current_time = time.time()
-
-        # Check if the user is on cooldown
-        if username in self.email_cooldowns:
-            time_since_last_email = current_time - self.email_cooldowns[username]
-            if time_since_last_email < self.email_cooldown_time:
-                remaining_cooldown = int(self.email_cooldown_time - time_since_last_email)
-                cooldown_message = f"You're on cooldown. You can send another email in {remaining_cooldown} seconds."
-                await self.twitch_connection.reply(ctx, cooldown_message)
-                return
-
         # If not on cooldown, save the email and update the cooldown
         self.save_email(username, subject, body)
-        self.email_cooldowns[username] = current_time
 
     def save_email(self, username, subject, body):
         email_data = {
