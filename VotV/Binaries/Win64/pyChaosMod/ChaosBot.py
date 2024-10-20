@@ -12,6 +12,45 @@ import asyncio
 import traceback
 import logging
 from logging.handlers import RotatingFileHandler
+from src.direct_mode import DirectModeHandler  
+import requests
+import subprocess
+import zipfile
+import shutil
+
+VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/3.0.0/chaosbot_version.txt"
+DOWNLOAD_URL = "https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip"
+
+def check_for_updates(current_version):
+    try:
+        response = requests.get(VERSION_URL)
+        latest_version = response.text.strip()
+        return latest_version > current_version
+    except Exception as e:
+        logger.error(f"Failed to check for updates: {e}")
+        return False
+    
+
+def check_for_updates(current_version):
+    try:
+        response = requests.get(VERSION_URL)
+        latest_version = response.text.strip()
+        return latest_version > current_version
+    except Exception as e:
+        logger.error(f"Failed to check for updates: {e}")
+        return False
+
+def start_update_process():
+    try:
+        updater_path = os.path.join(os.path.dirname(sys.executable), "ChaosBot_Updater.exe")
+        if os.path.exists(updater_path):
+            subprocess.Popen([updater_path, sys.executable])
+            logger.info("Update process started. Exiting current instance.")
+            sys.exit(0)
+        else:
+            logger.error("Updater executable not found.")
+    except Exception as e:
+        logger.error(f"Failed to start update process: {e}")
 
 def setup_logging():
     logger = logging.getLogger()
@@ -85,6 +124,17 @@ async def main():
     logger.info("Starting ChaosBot")
     logger.info("Loading config")
     config = load_config()
+
+    if getattr(sys, 'frozen', False):
+        current_version = config.get('version', '0.0.0')
+        logger.info(f"Current version: {current_version}")
+        if check_for_updates(current_version):
+            logger.info("New version available. Starting update process...")
+            start_update_process()
+        else:
+            logger.info("No updates available.")
+    else:
+        logger.warning("ChaosBot is running in development mode. Automatic updates are disabled.")
    
     logger.info("Establishing subsystems")
     
