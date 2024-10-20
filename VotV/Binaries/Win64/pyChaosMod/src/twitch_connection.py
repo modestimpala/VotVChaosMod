@@ -7,11 +7,12 @@ import asyncio
 from twitchio.ext import commands
 
 class TwitchConnection(commands.Bot):
-    def __init__(self, config, voting_system, email_system, shop_system):
+    def __init__(self, config, voting_system, email_system, shop_system, hint_system):
 
         self.voting_system = voting_system
         self.email_system = email_system
         self.shop_system = shop_system
+        self.hint_system = hint_system
 
         self.shop_system.set_twitch_connection(self)
         self.email_system.set_twitch_connection(self)
