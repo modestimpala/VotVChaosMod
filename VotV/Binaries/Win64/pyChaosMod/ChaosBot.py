@@ -2,8 +2,8 @@ import os
 import signal
 import sys
 import psutil
+from src.hint_system import HintSystem
 from src.twitch_connection import TwitchConnection
-from src.message_handler import MessageHandler
 from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
@@ -141,11 +141,18 @@ async def main():
     
     email_system = EmailSystem(config)
     shop_system = ShopSystem(config)
-    voting_system = VotingSystem(config)
-   
-    twitch_connection = TwitchConnection(config, voting_system, email_system, shop_system)
+    hint_system = HintSystem(config)
 
-    logger.info("Starting Twitch Connection")
+
+    if config['direct']['enabled']:
+        logger.info("Starting in Direct Mode")
+        connection = DirectModeHandler(config, email_system, shop_system, hint_system)
+    else:
+        logger.info("Starting in Twitch Mode")
+        voting_system = VotingSystem(config)
+        connection = TwitchConnection(config, voting_system, email_system, shop_system, hint_system)
+
+    logger.info("Starting Connection")
 
     shutdown_event = asyncio.Event()
     
@@ -158,19 +165,19 @@ async def main():
         signal.signal(sig, signal_handler)
 
     try:
-        twitch_task = asyncio.create_task(twitch_connection.start())
+        connection_task = asyncio.create_task(connection.start())
         shutdown_task = asyncio.create_task(shutdown_event.wait())
 
         done, pending = await asyncio.wait(
-            [twitch_task, shutdown_task],
+            [connection_task, shutdown_task],
             return_when=asyncio.FIRST_COMPLETED
         )
 
         if shutdown_task in done:
-            logger.info("Shutdown event received, closing Twitch connection...")
-            twitch_task.cancel()
+            logger.info("Shutdown event received, closing connection...")
+            connection_task.cancel()
             try:
-                await twitch_task
+                await connection_task
             except asyncio.CancelledError:
                 pass
         
@@ -186,7 +193,7 @@ async def main():
         logger.error("Full traceback:")
         traceback.print_exc()
     finally:
-        await shutdown(twitch_connection)
+        await shutdown(connection)
 
 if __name__ == "__main__":
     if is_already_running():
