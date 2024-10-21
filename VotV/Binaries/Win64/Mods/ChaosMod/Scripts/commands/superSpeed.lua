@@ -8,7 +8,6 @@ return {
             Pawn.defSpeed = 2000
             ExecuteWithDelay(180000, function()
                 Pawn.defSpeed = 400
-                Hint("Normal speed!")
             end)
         else 
             print("Pawn is not valid")

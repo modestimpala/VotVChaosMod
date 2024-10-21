@@ -9,7 +9,6 @@ return {
         Pawn:SetActorScale3D(Scale3D)
         ExecuteWithDelay(180000, function()
             Pawn:SetActorScale3D({X=1, Y=1, Z=1})
-            Hint("Normal sized!")
         end)
         return true
     end
