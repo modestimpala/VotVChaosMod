@@ -19,7 +19,6 @@ return {
             allKerfuros:ForEach(function(index, kerfuro)
                 kerfuro:get():SetActorScale3D({X=1, Y=1, Z=1})
             end)
-            Hint("Normal sized kerfurs!")
         end)
         return true
     end
