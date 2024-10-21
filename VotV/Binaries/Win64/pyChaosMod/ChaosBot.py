@@ -65,12 +65,13 @@ def setup_logging():
     file_handler = RotatingFileHandler(
         filename=os.path.join(log_dir, 'chaosbot.log'),
         maxBytes=5*1024*1024,  # 5MB
-        backupCount=5
+        backupCount=5,
+        encoding='utf-8'  # Specify UTF-8 encoding
     )
     file_handler.setLevel(logging.DEBUG)
 
     # Create console handler with a higher log level
-    console_handler = logging.StreamHandler()
+    console_handler = logging.StreamHandler(sys.stdout)  # Use sys.stdout instead of creating a new StreamHandler
     console_handler.setLevel(logging.INFO)
 
     # Create formatter and add it to the handlers
