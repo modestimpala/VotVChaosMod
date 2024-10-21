@@ -610,7 +610,9 @@ local config = {
     chatShop = readConfig("chatShop.cfg"),
     emails = readConfig("emails.cfg"),
     twitch = readConfig("twitch.cfg"),
-    voting = readConfig("voting.cfg")
+    voting = readConfig("voting.cfg"),
+    hints = readConfig("hints.cfg"),
+    direct = readConfig("direct.cfg")
 }
 
 -- Define file paths
@@ -618,7 +620,9 @@ config.files = {
     enable = base_path .. "enable.txt",
     emails_enable = base_path .. "emails_enable.txt",
     emails_master = base_path .. "emails_master.json",
+    hints_master = base_path .. "hints_master.json",
     shops_master = base_path .. "shops_master.json",
+    direct_master = base_path .. "direct_master.json",
     votes = base_path .. "votes.txt",
     voting_enabled = base_path .. "voting_enabled.txt",
     shopOpen = base_path .. "shopOpen.txt"
@@ -635,6 +639,18 @@ if io.open(config.files.emails_master, "r") then
     safeWriteToFile(config.files.emails_master, "[]")
 else
     print("emails_master file does not exist")
+end
+
+if io.open(config.files.hints_master, "r") then
+    safeWriteToFile(config.files.hints_master, "[]")
+else
+    print("hints_master file does not exist")
+end
+
+if io.open(config.files.direct_master, "r") then
+    safeWriteToFile(config.files.direct_master, "[]")
+else
+    print("direct_master file does not exist")
 end
 
 -- Wipe votes if the file exists
@@ -666,32 +682,6 @@ RegisterConsoleCommandHandler(("Chaos"), function(full, args)
     return true
 end)
 
-
-RegisterConsoleCommandHandler(("PlayerPos"), function()
-    local FirstPlayerController = UEHelpers:GetPlayerController()
-    local Pawn = FirstPlayerController.Pawn
-    local Location = Pawn:K2_GetActorLocation()
-    print(string.format("[MyLuaMod] Player location: {X=%.3f, Y=%.3f, Z=%.3f}\n", Location.X, Location.Y, Location.Z))
-    if lastLocation then
-        print(string.format("[MyLuaMod] Player moved: {delta_X=%.3f, delta_Y=%.3f, delta_Z=%.3f}\n",
-            Location.X - lastLocation.X,
-            Location.Y - lastLocation.Y,
-            Location.Z - lastLocation.Z)
-        )
-    end
-    lastLocation = Location
-    return true
-end)
-
-RegisterConsoleCommandHandler(("PlayerRot"), function()
-    local FirstPlayerController = UEHelpers:GetPlayerController()
-    local Pawn = FirstPlayerController.Pawn
-    local Rotation = Pawn:K2_GetActorRotation()
-    print(string.format("[MyLuaMod] Player rotation: {Pitch=%.3f, Yaw=%.3f, Roll=%.3f}\n", Rotation.Pitch, Rotation.Yaw, Rotation.Roll))
-    return true
-end)
-
-
 -- Function to process new emails
 local function processNewEmails()
     local emails = readMasterFile(config.files.emails_master)
@@ -705,8 +695,15 @@ local function processNewEmails()
                 emailHandler = World:SpawnActor(emailHandler_C, {}, {})
             end
             if emailHandler and emailHandler:IsValid() then
-                local fullBody = email.body .. " - " .. email.username
-                emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                if config.direct.enabled then
+                    emailHandler:addSpecificUserEmail(email.user, FText(email.subject), FText(email.body))
+                else
+                  if email.username == nil then
+                      email.username = "Twitch"
+                  end
+                  local fullBody = email.body .. " - " .. email.username
+                  emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                end
             end
             email.processed = true
             processed[#processed + 1] = i
@@ -730,7 +727,11 @@ local function processNewShopOrders()
                 shopHandler = World:SpawnActor(shopHandler_C, {}, {})
             end
             if shopHandler and shopHandler:IsValid() then
-                shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
+                if config.direct.enabled then
+                    shopHandler:placeOrder(FName(order.item), order.amount)
+                else
+                  shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
+                end
             end
             order.processed = true
             processed[#processed + 1] = i
@@ -738,6 +739,56 @@ local function processNewShopOrders()
     end
     if #processed > 0 then
         writeMasterFile(config.files.shops_master, orders)
+    end
+end
+
+local function processNewHints()
+    local hints = readMasterFile(config.files.hints_master)
+    local processed = {}
+    for i, hint in ipairs(hints) do
+        if not hint.processed then
+            local hintsHandler_C = FindFirstOf("hintsHandler_C")
+            if not hintsHandler_C:IsValid() then
+                local World = UEHelpers:GetWorld()
+                local hintsHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/hintsHandler.hintsHandler_C")
+                hintsHandler_C = World:SpawnActor(hintsHandler_C, {}, {})
+            end
+            if hintsHandler_C and hintsHandler_C:IsValid() then
+                hintsHandler_C:submitHint(hint.type, FText(hint.hint))
+            end
+            hint.processed = true
+            processed[#processed + 1] = i
+        end
+    end
+    if #processed > 0 then
+        writeMasterFile(config.files.hints_master, hints)
+    end
+end
+
+local function processNewDirects()
+    local directs = readMasterFile(config.files.direct_master)
+    local processed = {}
+    for i, direct in ipairs(directs) do
+        if not direct.processed then
+            local directHandler_C = FindFirstOf("directHandler_C")
+            if not directHandler_C:IsValid() then
+                local World = UEHelpers:GetWorld()
+                local directHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/directHandler.directHandler_C")
+                directHandler_C = World:SpawnActor(directHandler_C, {}, {})
+            end
+            if directHandler_C and directHandler_C:IsValid() then
+                if direct.type == "trigger_chaos" then
+                    directHandler_C:runDirectCommand(direct.command)
+                elseif direct.type == "trigger_event" then
+                    directHandler_C:runDirectEvent(direct.command)
+                end
+            end
+            direct.processed = true
+            processed[#processed + 1] = i
+        end
+    end
+    if #processed > 0 then
+        writeMasterFile(config.files.direct_master, directs)
     end
 end
 
@@ -890,9 +941,20 @@ end
 
 -- Main loop using loopasync
 LoopAsync(math.floor(1000 / 30), function()
-    if config.chatShop.enabled then
+    if config.direct.enabled then
+        processNewDirects()
+        processNewEmails()
+        processNewHints()
         processNewShopOrders()
     end
+
+    if not config.direct.enabled and config.chatShop.enabled then
+        processNewShopOrders()
+    end
+end)
+
+LoopAsync(5000, function() 
+    config.direct = readConfig("direct.cfg")
 end)
 
 LoopAsync(2500, function()
