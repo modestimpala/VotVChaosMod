@@ -7,7 +7,9 @@ def load_config():
         'chatShop': 'chatShop.cfg',
         'emails': 'emails.cfg',
         'twitch': 'twitch.cfg',
-        'voting': 'voting.cfg'
+        'voting': 'voting.cfg',
+        'direct': 'direct.cfg',
+        'hints': 'hints.cfg',
     }
 
     base_path = './pyChaosMod/'
@@ -42,13 +44,16 @@ def load_config():
     config['files'] = {
         'emails_master': os.path.join(base_path, 'emails_master.json'),
         'shops_master': os.path.join(base_path, 'shops_master.json'),
-        'commands': os.path.join(base_path, 'commands.json'),
+        'hints_master': os.path.join(base_path, 'hints_master.json'),
+        'direct_master': os.path.join(base_path, 'direct_master.json'),
         'emails_enable': os.path.join(base_path, 'emails_enable.txt'),
         'votes': os.path.join(base_path, 'votes.txt'),
         'enable': os.path.join(base_path, 'enable.txt'),
         'isVoting': os.path.join(base_path, 'voting_enabled.txt'),
         'shopOpen': os.path.join(base_path, 'shopOpen.txt'),
     }
+
+    config['version'] = '3.0.0'
 
     return config
 
