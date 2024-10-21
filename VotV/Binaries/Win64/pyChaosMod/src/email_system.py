@@ -11,29 +11,57 @@ class EmailSystem:
         self.email_cooldown_time = config['emails']['user_cooldown']
         self.master_file = config['files']['emails_master']
         self.twitch_connection = None
+        self.direct_connection = None
+
+        self.valid_users = [
+            "Dr_Bao",
+            "Prof_Lea",
+            "Auto",
+            "Dr_Max",
+            "Dr_Ken",
+            "Dr_Ena",
+            "Dr_Ula",
+            "Dr_Ler",
+            "user",
+            "Dr_Noa"
+        ]
 
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
 
-    async def process_email(self, username, subject, body, ctx):
+    def set_direct_connection(self, direct_connection):
+        self.direct_connection = direct_connection
+
+    async def process_email(self, twitch_user, subject, body, ctx, user="user"):
         current_time = time.time()
 
-        # Check if the user is on cooldown
-        if username in self.email_cooldowns:
-            time_since_last_email = current_time - self.email_cooldowns[username]
-            if time_since_last_email < self.email_cooldown_time:
-                remaining_cooldown = int(self.email_cooldown_time - time_since_last_email)
-                cooldown_message = f"You're on cooldown. You can send another email in {remaining_cooldown} seconds."
-                await self.twitch_connection.reply(ctx, cooldown_message)
+        # Check if the user is valid
+        if user not in self.valid_users and self.twitch_connection is not None:
+            await self.twitch_connection.reply(ctx, "Please use a valid user. e.g Dr_Bao, Dr_Ken...")
+            return
+        
+        if user not in self.valid_users and self.direct_connection is not None:
+            user="user"
+
+        if self.twitch_connection is not None:
+            # Check if the user is on cooldown
+            if twitch_user in self.email_cooldowns:
+                time_since_last_email = current_time - self.email_cooldowns[twitch_user]
+                if time_since_last_email < self.email_cooldown_time:
+                    remaining_cooldown = int(self.email_cooldown_time - time_since_last_email)
+                    cooldown_message = f"You're on cooldown. You can send another email in {remaining_cooldown} seconds."
+                    await self.twitch_connection.reply(ctx, cooldown_message)
                 return
 
         # If not on cooldown, save the email and update the cooldown
-        self.save_email(username, subject, body)
-        self.email_cooldowns[username] = current_time
+        self.save_email(twitch_user, subject, body, user)
+        if self.twitch_connection is not None:
+            self.email_cooldowns[twitch_user] = current_time
 
-    def save_email(self, username, subject, body):
+    def save_email(self, twitch_user, subject, body, user="user"):
         email_data = {
-            "username": username,
+            "user": user,
+            "twitch_user": twitch_user,
             "subject": subject.strip(),
             "body": body.strip(),
             "timestamp": time.time(),
@@ -44,7 +72,7 @@ class EmailSystem:
         emails.append(email_data)
         self.write_master_file(emails)
         
-        print(f"Email saved for {username}")
+        print(f"Email saved for {twitch_user}")
 
     def read_master_file(self):
         if os.path.exists(self.master_file):
@@ -68,8 +96,9 @@ class EmailSystem:
         return self.emails_enabled
 
     def update(self):
-        self.emails_enabled = os.path.exists(self.config['files']['emails_enable'])
+        if self.twitch_connection is not None:
+            self.emails_enabled = os.path.exists(self.config['files']['emails_enable'])
         current_time = time.time()
-        for username, cooldown_time in list(self.email_cooldowns.items()):
+        for twitch_user, cooldown_time in list(self.email_cooldowns.items()):
             if current_time - cooldown_time >= self.email_cooldown_time:
-                del self.email_cooldowns[username]
+                del self.email_cooldowns[twitch_user]
