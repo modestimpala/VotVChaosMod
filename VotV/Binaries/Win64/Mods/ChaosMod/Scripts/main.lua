@@ -607,25 +607,25 @@ end
 
 -- Read configurations
 local config = {
-    chatShop = readConfig("chatShop.cfg"),
-    emails = readConfig("emails.cfg"),
-    twitch = readConfig("twitch.cfg"),
-    voting = readConfig("voting.cfg"),
-    hints = readConfig("hints.cfg"),
-    direct = readConfig("direct.cfg")
+    chatShop = readConfig("cfg/chatShop.cfg"),
+    emails = readConfig("cfg/emails.cfg"),
+    twitch = readConfig("cfg/twitch.cfg"),
+    voting = readConfig("cfg/voting.cfg"),
+    hints = readConfig("cfg/hints.cfg"),
+    direct = readConfig("cfg/direct.cfg")
 }
 
 -- Define file paths
 config.files = {
-    enable = base_path .. "enable.txt",
-    emails_enable = base_path .. "emails_enable.txt",
+    enable = base_path .. "listen/enable.txt",
+    emails_enable = base_path .. "listen/emails_enable.txt",
     emails_master = base_path .. "emails_master.json",
     hints_master = base_path .. "hints_master.json",
     shops_master = base_path .. "shops_master.json",
     direct_master = base_path .. "direct_master.json",
-    votes = base_path .. "votes.txt",
-    voting_enabled = base_path .. "voting_enabled.txt",
-    shopOpen = base_path .. "shopOpen.txt"
+    votes = base_path .. "listen/votes.txt",
+    voting_enabled = base_path .. "listen/voting_enabled.txt",
+    shopOpen = base_path .. "listen/shopOpen.txt"
 }
 
 -- Wipe master file contents if they exist

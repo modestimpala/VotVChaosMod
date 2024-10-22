@@ -15,7 +15,7 @@ def load_config():
     base_path = './pyChaosMod/'
 
     for section, filename in config_files.items():
-        config_path = os.path.join(base_path, filename)
+        config_path = os.path.join(base_path, 'cfg', filename)
         parser = configparser.ConfigParser()
         # check if file exists
         if not os.path.exists(config_path):
@@ -46,12 +46,12 @@ def load_config():
         'shops_master': os.path.join(base_path, 'shops_master.json'),
         'hints_master': os.path.join(base_path, 'hints_master.json'),
         'direct_master': os.path.join(base_path, 'direct_master.json'),
-        'emails_enable': os.path.join(base_path, 'emails_enable.txt'),
-        'commands': os.path.join(base_path, 'twitchChannelPoints.cfg'),
-        'votes': os.path.join(base_path, 'votes.txt'),
-        'enable': os.path.join(base_path, 'enable.txt'),
-        'isVoting': os.path.join(base_path, 'voting_enabled.txt'),
-        'shopOpen': os.path.join(base_path, 'shopOpen.txt'),
+        'emails_enable': os.path.join(base_path, '/listen/emails_enable.txt'),
+        'commands': os.path.join(base_path, '/cfg/twitchChannelPoints.cfg'),
+        'votes': os.path.join(base_path, '/listen/votes.txt'),
+        'enable': os.path.join(base_path, '/listen/enable.txt'),
+        'isVoting': os.path.join(base_path, '/listen/voting_enabled.txt'),
+        'shopOpen': os.path.join(base_path, '/listen/shopOpen.txt'),
     }
 
     config['version'] = '3.0.0'
