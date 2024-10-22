@@ -4,9 +4,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 import asyncio
-from twitchio.ext import commands
+from src.twitch.pubsub_mixin import PubSubMixin
+from src.twitch.channel_points_mixin import ChannelPointsMixin
+from twitchio.ext import commands, pubsub
 
-class TwitchConnection(commands.Bot):
+class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     def __init__(self, config, voting_system, email_system, shop_system, hint_system):
 
         self.voting_system = voting_system
@@ -29,7 +31,7 @@ class TwitchConnection(commands.Bot):
 
         self.logger.info("Initializing Twitch Connection...")
 
-        if self.config['twitch']['oauth_token'] == 'notset' or self.config['twitch']['bot_username'] == 'notset' or self.config['twitch']['channel'] == 'notset':
+        if self.config['twitch']['oauth_token'] == 'notset' or self.config['twitch']['channel'] == 'notset':
             raise ValueError("Twitch OAuth token, bot username, or channel not set in config file")
         
         super().__init__(
@@ -64,10 +66,23 @@ class TwitchConnection(commands.Bot):
     async def event_ready(self):
         self.logger.info(f'Logged in as | {self.nick}')
         self.is_connected = True
+
+        # Initialize channel points system if enabled
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.initialize_channel_points()
+            await self.initialize_pubsub()
+
         self.loop.create_task(self.process_message_queue())
         self.loop.create_task(self.update_systems())
         self.logger.info("ChaosBot is now running...")
         self.logger.info("Use Ctrl+C to stop the bot gracefully.")
+        if self.config.get('twitch', {}).get('channel_points', False):
+            self.logger.info("Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
+
+    async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
+        """Handle channel point redemption events from PubSub."""
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.handle_redemption(event)
 
     async def process_message_queue(self):
         while self.should_run:
@@ -135,20 +150,28 @@ class TwitchConnection(commands.Bot):
             return
         await self.email_system.process_email(ctx.author.name, subject, body, ctx)
 
+    async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
+        await self.hint_system.process_hint(hint_type, hint_text, ctx)
+
 
     def is_connected_to_twitch(self):
         return self.is_connected
     
     async def close(self):
+        """Clean up and close connections."""
         self.logger.info("Closing Twitch Connection...")
         self.should_run = False
-        # Wait for queued messages to be sent
+
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.close_pubsub()
+            await self.remove_all_rewards()
+
         while not self.message_queue.empty():
             try:
                 await asyncio.wait_for(self.message_queue.get(), timeout=0.1)
             except asyncio.TimeoutError:
                 break
-        # Close the underlying connection
+
         try:
             await super().close()
         except Exception as e:
