@@ -23,6 +23,7 @@ class DirectModeHandler:
         self.shop_system.set_direct_connection(self)
 
         self.master_file = config['files']['direct_master']
+        
 
     async def start(self):
         server_url = "wss://votv.moddy.dev/chaos-kawfee/ws"
@@ -98,13 +99,17 @@ class DirectModeHandler:
     async def send_panel_image(self):
         while True:
             try:
+                # Check if the panel image file exists
+                if not os.path.exists('./png/panelPhoto.txt'):
+                    await asyncio.sleep(6)
+                    continue
+
                 # Read the base64 image data from the file
                 with open('./png/panelPhoto.txt', 'r') as f:
                     base64_image = f.read().strip()
                 
                 # Send the image data via WebSocket
                 if self.websocket and self.captcha_verified:
-                    logger.info("Sending panel image to control panel")
                     await self.websocket.send(json.dumps({
                         "action": "update_panel_image",
                         "image": base64_image
