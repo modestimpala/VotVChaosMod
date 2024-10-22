@@ -47,6 +47,7 @@ def load_config():
         'hints_master': os.path.join(base_path, 'hints_master.json'),
         'direct_master': os.path.join(base_path, 'direct_master.json'),
         'emails_enable': os.path.join(base_path, 'emails_enable.txt'),
+        'commands': os.path.join(base_path, 'twitchChannelPoints.cfg'),
         'votes': os.path.join(base_path, 'votes.txt'),
         'enable': os.path.join(base_path, 'enable.txt'),
         'isVoting': os.path.join(base_path, 'voting_enabled.txt'),
