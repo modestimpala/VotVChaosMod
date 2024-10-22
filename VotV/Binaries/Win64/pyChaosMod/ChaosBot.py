@@ -3,7 +3,7 @@ import signal
 import sys
 import psutil
 from src.hint_system import HintSystem
-from src.twitch_connection import TwitchConnection
+from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
