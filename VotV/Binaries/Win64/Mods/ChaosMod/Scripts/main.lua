@@ -755,8 +755,11 @@ local function processNewHints()
             end
             if hintsHandler_C and hintsHandler_C:IsValid() then
                 hintsHandler_C:submitHint(hint.type, FText(hint.hint))
+            else 
+                print("Failed to find hintsHandler_C")
             end
             hint.processed = true
+            print("Processed hint: " .. hint.hint)
             processed[#processed + 1] = i
         end
     end
