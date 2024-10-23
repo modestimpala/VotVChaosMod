@@ -26,11 +26,3 @@ class PubSubMixin:
             self.logger.info("Successfully subscribed to channel points PubSub topics")
         except Exception as e:
             self.logger.error(f"Failed to setup PubSub: {e}")
-
-    async def close_pubsub(self):
-        """Close PubSub connection."""
-        try:
-            if self.pubsub:
-                self.logger.info("Disconnected from PubSub")
-        except Exception as e:
-            self.logger.error(f"Error closing PubSub connection: {e}")
