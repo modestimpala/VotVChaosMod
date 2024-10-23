@@ -142,6 +142,7 @@ class ChannelPointsMixin:
                     }
                     commands.append(command)
                 else:
+                    # TODO: fix ";fling" command returning invalid format
                     self.logger.warning(f"Invalid command format: {line.strip()}")
         return commands
     
@@ -172,20 +173,20 @@ class ChannelPointsMixin:
             {
                 'system': 'emails',
                 'title': 'Send Email',
-                'description': 'Send an email (Format: subject: <subject> body: <body>)',
-                'cost': self.config.get('email', {}).get('point_cost', 1000)
+                'description': 'Send an email (Format: subject: <subject> body: <body> (optional user:Dr_Bao, etc) )',
+                'cost': self.config.get('email', {}).get('points_cost', 1000)
             },
             {
                 'system': 'chatShop',
                 'title': 'Buy Shop Item',
                 'description': 'Purchase an item from the shop (Enter item name)',
-                'cost': self.config.get('shop', {}).get('point_cost', 1000)
+                'cost': self.config.get('shop', {}).get('points_cost', 1000)
             },
             {
                 'system': 'hints',
                 'title': 'Send Hint',
                 'description': 'Send a hint to the streamer, optionally with a type. Format: (type) hint',
-                'cost': self.config.get('hint', {}).get('point_cost', 500)
+                'cost': self.config.get('hint', {}).get('points_cost', 500)
             }
         ]
 
@@ -196,7 +197,7 @@ class ChannelPointsMixin:
                     'title': system['title'],
                     'description': system['description'],
                     'pointCost': system['cost'],
-                    'pointsCooldown': self.config.get(system['system'], {}).get('point_cooldown', 0),
+                    'pointsCooldown': self.config.get(system['system'], {}).get('points_cooldown', 0),
                     'isEnabledForPoints': True
                 }
                 
@@ -306,6 +307,8 @@ class ChannelPointsMixin:
 
             if command_id:
                 self.logger.info(f"Channel points redeemed by {event.user.name} for command {command_id}")
+                if event.input:
+                    self.logger.info(f"User input: {event.input}")
                 await self.fulfill_redemption(event)
             else:
                 self.logger.warning(f"Received redemption for unknown reward ID: {event.reward.id}")

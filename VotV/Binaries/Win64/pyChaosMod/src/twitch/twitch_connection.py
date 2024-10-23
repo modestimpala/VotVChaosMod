@@ -127,6 +127,9 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     @commands.command()
     async def shop(self, ctx, item : str | None):
         """Command to interact with the shop system."""
+        if self.config.get('chatShop', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to interact with the shop.")
+            return
         if item is None:
             await ctx.reply(f"You can order items from the shop using !shop <item>. The shop is currently {'open' if self.shop_system.is_shop_open() else 'closed'}.")
             return
@@ -138,6 +141,9 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     @commands.command()
     async def email(self, ctx: commands.Context):
         """Command to send emails."""
+        if self.config.get('emails', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to send emails.")
+            return
         if not self.email_system.are_emails_enabled():
             await ctx.reply("Emails are currently disabled.")
             return
@@ -161,6 +167,9 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
     async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
         """Command to send hints."""
+        if self.config.get('hints', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to send hints.")
+            return
         await self.hint_system.process_hint(hint_type, hint_text, ctx)
 
 
@@ -174,7 +183,6 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         self.should_run = False
 
         if self.config.get('twitch', {}).get('channel_points', False):
-            await self.close_pubsub()
             await self.remove_all_rewards()
 
         while not self.message_queue.empty():
