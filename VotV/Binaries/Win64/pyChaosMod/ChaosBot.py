@@ -15,8 +15,6 @@ from logging.handlers import RotatingFileHandler
 from src.direct_mode import DirectModeHandler  
 import requests
 import subprocess
-import zipfile
-import shutil
 
 VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/3.0.0/chaosbot_version.txt"
 DOWNLOAD_URL = "https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip"
