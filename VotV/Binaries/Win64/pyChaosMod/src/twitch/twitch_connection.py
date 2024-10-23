@@ -1,12 +1,12 @@
-import queue
 import re
 import logging
-from logging.handlers import RotatingFileHandler
-import os
 import asyncio
+from src.utils.chaos_file_handler import ChaosFileHandler
 from src.twitch.pubsub_mixin import PubSubMixin
 from src.twitch.channel_points_mixin import ChannelPointsMixin
+from src.dataclass.email_message import EmailCommandProcessor
 from twitchio.ext import commands, pubsub
+
 
 class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     """Class to handle the Twitch connection for the bot."""
@@ -18,6 +18,8 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
         self.shop_system.set_twitch_connection(self)
         self.email_system.set_twitch_connection(self)
+
+        self.direct_file_handler = ChaosFileHandler(config['files']['direct_master'])
 
         self.config = config
         self.message_queue = asyncio.Queue()
@@ -136,7 +138,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         if not self.shop_system.is_shop_open():
             await ctx.reply(f"The shop is currently closed. Please wait for it to open.")
             return
-        await self.shop_system.process_shop(ctx.author.name, item, ctx)
+        await self.shop_system.process_shop(item, ctx.author.name, ctx)
 
     @commands.command()
     async def email(self, ctx: commands.Context):
@@ -151,19 +153,18 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         # Remove the command name from the message
         content = ctx.message.content.split(maxsplit=1)[1] if len(ctx.message.content.split()) > 1 else ""
 
-        # Try to split the content into subject and body
-        try:
-            subject, body = content.split("body:", 1)
-            subject = subject.replace("subject:", "").strip()
-            body = body.strip()
-        except ValueError:
-            await ctx.reply("To send emails, type !email subject:<email subject> body:<email body>")
+        # Parse the email message
+        email_processor = EmailCommandProcessor()
+        email_message = email_processor.parse_email_string(content)
+        
+        if not email_message:
+            await ctx.reply("To send emails, use the format: !email subject:<email subject> body:<email body> [user:<username>]")
             return
-
-        if not subject or not body:
-            await ctx.reply("Both subject and body are required. Type !email for help.")
-            return
-        await self.email_system.process_email(ctx.author.name, subject, body, ctx)
+        
+        if not email_message.user:
+            email_message.user = "user"
+        
+        await self.email_system.process_email(ctx.author.name, email_message.subject, email_message.body, ctx, email_message.user)
 
     async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
         """Command to send hints."""
