@@ -13,15 +13,28 @@ class VotingSystem:
         self.votes_file = config['files']['votes']
         self.last_write_time = 0
         self.write_interval = 1  # Write every 1 second
+        self.current_voting_status = False  # Voting status from last check
 
         self.logger = logging.getLogger(__name__)
 
     def check_voting_status(self):
-        if os.path.exists(self.is_voting_file):
-            with open(self.is_voting_file, 'r') as f:
-                content = f.read().strip()
-                return content.lower() == 'true'
-        return False
+        """Check if voting is enabled by reading the status file."""
+        try:
+            if os.path.exists(self.is_voting_file):
+                try:
+                    with open(self.is_voting_file, 'r') as f:
+                        content = f.read().strip()
+                        return content.lower() == 'true'
+                except PermissionError:
+                    # Log the error but don't crash
+                    self.logger.debug(f"Permission denied when reading {self.is_voting_file}, will retry next update")
+                    return self.current_voting_status  # Return last known status
+                except Exception as e:
+                    self.logger.error(f"Error reading voting status file: {e}")
+                    return self.current_voting_status  # Return last known status
+        except Exception as e:
+            self.logger.error(f"Error checking voting file existence: {e}")
+            return self.current_voting_status  # Return last known status
 
     def read_voting_options(self):
         self.current_options = []
@@ -60,7 +73,17 @@ class VotingSystem:
            
 
     def update(self):
-        is_voting = self.check_voting_status()
+        try:
+            new_status = self.check_voting_status()
+            if new_status != self.current_voting_status:
+                self.logger.debug(f"Voting status changed to: {new_status}")
+                self.current_voting_status = new_status
+        except Exception as e:
+            self.logger.error(f"Error in voting system update: {e}")
+            # Continue running even if there's an error
+            pass  # Use last known status
+
+        is_voting = self.current_voting_status
        
         if is_voting and not self.voting_active:
             # Voting just started
