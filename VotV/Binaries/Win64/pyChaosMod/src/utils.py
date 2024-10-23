@@ -2,6 +2,7 @@ import os
 import configparser
 
 def load_config():
+    """Load configuration files."""
     config = {}
     config_files = {
         'chatShop': 'chatShop.cfg',
@@ -59,4 +60,5 @@ def load_config():
     return config
 
 def is_chaos_enabled(config):
+    """Check if chaos is enabled."""
     return os.path.exists(config['files']['enable'])

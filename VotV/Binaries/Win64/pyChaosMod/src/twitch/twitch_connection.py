@@ -9,8 +9,8 @@ from src.twitch.channel_points_mixin import ChannelPointsMixin
 from twitchio.ext import commands, pubsub
 
 class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
+    """Class to handle the Twitch connection for the bot."""
     def __init__(self, config, voting_system, email_system, shop_system, hint_system):
-
         self.voting_system = voting_system
         self.email_system = email_system
         self.shop_system = shop_system
@@ -41,6 +41,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         )
 
     async def start(self):
+        """Start the Twitch connection."""
         self.logger.info("Starting Twitch Connection...")
         try:
             await super().start()
@@ -57,6 +58,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
             self.logger.info("Twitch Connection closing...")
 
     async def update_systems(self):
+        """Update the various systems in the bot."""
         while self.should_run:
             self.voting_system.update()
             self.email_system.update()
@@ -85,6 +87,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
             await self.handle_redemption(event)
 
     async def process_message_queue(self):
+        """Process the message queue."""
         while self.should_run:
             try:
                 message = await asyncio.wait_for(self.message_queue.get(), timeout=1.0)
@@ -94,6 +97,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
                 pass  # This allows the loop to check should_run regularly
     
     async def queue_message(self, message):
+        """Queue a message to be sent."""
         await self.message_queue.put(message)
 
     async def event_message(self, ctx):
@@ -105,13 +109,16 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
             self.voting_system.process_vote(ctx.author.name, int(ctx.content))
 
     async def reply(self, ctx, message):
+        """Reply to a ctx message in the Twitch chat."""
         await ctx.reply(message)
 
     async def send_message(self, message):
+        """Send a message to the Twitch chat."""
         channel = self.get_channel(self.config['twitch']['channel'])
         await channel.send(message)
 
     def get_messages(self):
+        """Get all messages from the message queue."""
         messages = []
         while not self.message_queue.empty():
             messages.append(self.message_queue.get())
@@ -119,6 +126,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
     @commands.command()
     async def shop(self, ctx, item : str | None):
+        """Command to interact with the shop system."""
         if item is None:
             await ctx.reply(f"You can order items from the shop using !shop <item>. The shop is currently {'open' if self.shop_system.is_shop_open() else 'closed'}.")
             return
@@ -129,6 +137,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
     @commands.command()
     async def email(self, ctx: commands.Context):
+        """Command to send emails."""
         if not self.email_system.are_emails_enabled():
             await ctx.reply("Emails are currently disabled.")
             return
@@ -151,10 +160,12 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         await self.email_system.process_email(ctx.author.name, subject, body, ctx)
 
     async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
+        """Command to send hints."""
         await self.hint_system.process_hint(hint_type, hint_text, ctx)
 
 
     def is_connected_to_twitch(self):
+        """Check if the bot is connected to Twitch."""
         return self.is_connected
     
     async def close(self):
