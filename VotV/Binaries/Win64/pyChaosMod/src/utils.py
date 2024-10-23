@@ -14,13 +14,18 @@ def load_config():
     }
 
     base_path = './pyChaosMod/'
+    base_path_listen = os.path.join(base_path, 'listen/')
+    base_path_cfg = os.path.join(base_path, 'cfg/')
+
+    if not os.path.exists(base_path_listen):
+        base_path_listen = './listen/'
 
     for section, filename in config_files.items():
-        config_path = os.path.join(base_path, 'cfg', filename)
+        config_path = os.path.join(base_path_cfg, filename)
         parser = configparser.ConfigParser()
         # check if file exists
         if not os.path.exists(config_path):
-            base_path = './'
+            base_path = './cfg/'
             config_path = os.path.join(base_path, filename)
             if not os.path.exists(config_path):
                 raise FileNotFoundError(f"Config file not found: {config_path} \n You may need to run the mod in-game once to generate the config files.")
@@ -47,13 +52,16 @@ def load_config():
         'shops_master': os.path.join(base_path, 'shops_master.json'),
         'hints_master': os.path.join(base_path, 'hints_master.json'),
         'direct_master': os.path.join(base_path, 'direct_master.json'),
-        'emails_enable': os.path.join(base_path, '/listen/emails_enable.txt'),
-        'commands': os.path.join(base_path, '/cfg/twitchChannelPoints.cfg'),
-        'votes': os.path.join(base_path, '/listen/votes.txt'),
-        'enable': os.path.join(base_path, '/listen/enable.txt'),
-        'isVoting': os.path.join(base_path, '/listen/voting_enabled.txt'),
-        'shopOpen': os.path.join(base_path, '/listen/shopOpen.txt'),
+        'emails_enable': os.path.join(base_path_listen, 'emails_enable.txt'),
+        'commands': os.path.join(base_path_cfg, 'twitchChannelPoints.cfg'),
+        'votes': os.path.join(base_path_listen, 'votes.txt'),
+        'enable': os.path.join(base_path_listen, 'enable.txt'),
+        'isVoting': os.path.join(base_path_listen, 'voting_enabled.txt'),
+        'shopOpen': os.path.join(base_path_listen, 'shopOpen.txt'),
     }
+
+    if not os.path.exists(config['files']['commands']):
+        config['files']['commands'] = os.path.join(base_path, 'twitchChannelPoints.cfg')
 
     config['version'] = '3.0.0'
 
