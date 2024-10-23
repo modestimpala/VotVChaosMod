@@ -7,6 +7,8 @@ import json
 import webbrowser
 import ssl
 
+from src.utils.chaos_file_handler import ChaosFileHandler
+
 logger = logging.getLogger(__name__)
 
 class DirectModeHandler:
@@ -22,7 +24,7 @@ class DirectModeHandler:
         self.email_system.set_direct_connection(self)
         self.shop_system.set_direct_connection(self)
 
-        self.master_file = config['files']['direct_master']
+        self.file_handler = ChaosFileHandler(config['files']['direct_master'])
         
 
     async def start(self):
@@ -127,23 +129,6 @@ class DirectModeHandler:
         logger.info("DirectModeHandler closed")
 
     async def process_chaos_command(self, type, command):
-        directs = self.read_master_file()
-        directs.append({
-            "type": type,
-            "command": command,
-            "timestamp": time.time(),
-            "processed": False
-        })
-        self.write_master_file(directs)
-
-    def read_master_file(self):
-        if os.path.exists(self.master_file):
-            with open(self.master_file, 'r') as f:
-                return json.load(f)
-        return []
-
-    def write_master_file(self, data):
-        with open(self.master_file, 'w') as f:
-            json.dump(data, f, indent=2)
+        await self.file_handler.process_chaos_command(type, command)
 
 # The main function in chaosbot.py would initialize this handler if directMode is True
