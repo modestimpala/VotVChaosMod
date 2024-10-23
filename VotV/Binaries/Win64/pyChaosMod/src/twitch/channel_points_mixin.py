@@ -157,10 +157,78 @@ class ChannelPointsMixin:
 
     async def create_rewards(self):
         """Create channel point rewards."""
+        # First create special system rewards if enabled
+        await self.create_special_system_rewards()
+        
+        # Then create regular command rewards
         commands = self.load_commands()
         for cmd in commands:
             if cmd['isEnabledForPoints']:
                 await self.create_custom_reward(cmd)
+
+    async def create_special_system_rewards(self):
+        """Create rewards for special system commands (Email, Shop, Hints)."""
+        special_systems = [
+            {
+                'system': 'emails',
+                'title': 'Send Email',
+                'description': 'Send an email (Format: subject: <subject> body: <body>)',
+                'cost': self.config.get('email', {}).get('point_cost', 1000)
+            },
+            {
+                'system': 'chatShop',
+                'title': 'Buy Shop Item',
+                'description': 'Purchase an item from the shop (Enter item name)',
+                'cost': self.config.get('shop', {}).get('point_cost', 1000)
+            },
+            {
+                'system': 'hints',
+                'title': 'Send Hint',
+                'description': 'Send a hint to the streamer, optionally with a type. Format: (type) hint',
+                'cost': self.config.get('hint', {}).get('point_cost', 500)
+            }
+        ]
+
+        for system in special_systems:
+            if self.config.get(system['system'], {}).get('channel_points', False):
+                command = {
+                    'id': f"{system['system']}_points",
+                    'title': system['title'],
+                    'description': system['description'],
+                    'pointCost': system['cost'],
+                    'pointsCooldown': self.config.get(system['system'], {}).get('point_cooldown', 0),
+                    'isEnabledForPoints': True
+                }
+                
+                try:
+                    # Check if reward already exists
+                    existing_reward = None
+                    for cmd_id, reward in self.rewards.items():
+                        if cmd_id == command['id']:
+                            existing_reward = reward
+                            break
+
+                    if existing_reward:
+                        self.logger.info(f"Special reward for {system['system']} already exists")
+                        continue
+
+                    reward = await self.broadcaster.create_custom_reward(
+                        token=self.config['twitch']['oauth_token'],
+                        title=command['title'],
+                        cost=int(command['pointCost']),
+                        prompt=command['description'],
+                        global_cooldown=int(command['pointsCooldown']),
+                        input_required=True,  # Special commands always require input
+                        redemptions_skip_queue=False
+                    )
+
+                    self.rewards[command['id']] = reward
+                    self.logger.info(f"Created special reward for {system['system']}")
+                    self.save_rewards()
+
+                except Exception as e:
+                    self.logger.error(f"Failed to create special reward for {system['system']}: {e}")
+                    self.logger.exception("Detailed traceback:")
 
     async def create_custom_reward(self, command):
         """Create a single custom reward."""
@@ -176,12 +244,24 @@ class ChannelPointsMixin:
                 self.logger.error("OAuth token is missing the 'channel:manage:redemptions' scope.")
                 return
 
+            # Check if reward already exists
+            existing_reward = None
+            for cmd_id, reward in self.rewards.items():
+                if cmd_id == command['id']:
+                    existing_reward = reward
+                    break
+
+            if existing_reward:
+                self.logger.info(f"Reward {command['title']} already exists")
+                return
+
             reward = await self.broadcaster.create_custom_reward(
                 token=self.config['twitch']['oauth_token'],
                 title=command['title'],
                 cost=int(command['pointCost']),
                 prompt=command['description'],
                 global_cooldown=int(command['pointsCooldown']),
+                input_required=False,  # Regular commands don't require input by default
                 redemptions_skip_queue=False
             )
             
