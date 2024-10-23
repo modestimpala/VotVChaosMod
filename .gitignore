@@ -20,3 +20,5 @@ VotV/Binaries/Win64/pyChaosMod/src/twitch/__pycache__/*.pyc
 VotV/Binaries/Win64/pyChaosMod/ChaosBot.spec
 VotV/Binaries/Win64/pyChaosMod/ws-test.py
 VotV/Binaries/Win64/pyChaosMod/png/panelPhoto.txt
+VotV/Binaries/Win64/pyChaosMod/listen/*.txt
+VotV/Binaries/Win64/pyChaosMod/channel_point_rewards.json
