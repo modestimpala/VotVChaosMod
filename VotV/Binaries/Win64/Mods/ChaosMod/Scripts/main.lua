@@ -866,7 +866,6 @@ local function clearEvents()
         ExecuteInGameThread(function()
             mainGamemode_C.eventsActive:Empty()
         end)
-        Hint("You can now pause/save")
     end
 end
 
@@ -957,7 +956,8 @@ LoopAsync(math.floor(1000 / 30), function()
 end)
 
 LoopAsync(5000, function() 
-    config.direct = readConfig("direct.cfg")
+    config.direct = readConfig("cfg/direct.cfg")
+    config.twitch = readConfig("cfg/twitch.cfg")
 end)
 
 LoopAsync(2500, function()
