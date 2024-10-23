@@ -695,14 +695,11 @@ local function processNewEmails()
                 emailHandler = World:SpawnActor(emailHandler_C, {}, {})
             end
             if emailHandler and emailHandler:IsValid() then
-                if config.direct.enabled then
-                    emailHandler:addSpecificUserEmail(email.user, FText(email.subject), FText(email.body))
+                if email.user == "user" then
+                    local fullBody = email.body .. " - " .. email.twitch_user
+                    emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
                 else
-                  if email.username == nil then
-                      email.username = "Twitch"
-                  end
-                  local fullBody = email.body .. " - " .. email.username
-                  emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                    emailHandler:addSpecificUserEmail(email.user, FText(email.subject), FText(email.body))
                 end
             end
             email.processed = true
