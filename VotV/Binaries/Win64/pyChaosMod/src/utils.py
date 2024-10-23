@@ -1,6 +1,17 @@
 import os
 import configparser
 
+def find_base_path():
+    """Determine the correct base path based on directory structure."""
+    # Check if we're in the pyChaosMod directory
+    if os.path.exists('./listen') or os.path.exists('./cfg'):
+        return './'
+    # Check if pyChaosMod is a subdirectory
+    elif os.path.exists('./pyChaosMod/listen') or os.path.exists('./pyChaosMod/cfg'):
+        return './pyChaosMod/'
+    else:
+        raise FileNotFoundError("Could not find pyChaosMod directory structure")
+
 def load_config():
     """Load configuration files."""
     config = {}
@@ -12,23 +23,27 @@ def load_config():
         'direct': 'direct.cfg',
         'hints': 'hints.cfg',
     }
+    
+    # Determine base paths
+    base_path = find_base_path()
+    base_path_listen = os.path.join(base_path, 'listen')
+    base_path_cfg = os.path.join(base_path, 'cfg')
 
-    base_path = './pyChaosMod/'
-    base_path_listen = os.path.join(base_path, 'listen/')
-    base_path_cfg = os.path.join(base_path, 'cfg/')
-
-    if not os.path.exists(base_path_listen):
-        base_path_listen = './listen/'
-
+    # Process each config file
     for section, filename in config_files.items():
         config_path = os.path.join(base_path_cfg, filename)
         parser = configparser.ConfigParser()
-        # check if file exists
+        
+        # If file doesn't exist in primary location, try alternate location
         if not os.path.exists(config_path):
-            base_path = './cfg/'
-            config_path = os.path.join(base_path, filename)
-            if not os.path.exists(config_path):
-                raise FileNotFoundError(f"Config file not found: {config_path} \n You may need to run the mod in-game once to generate the config files.")
+            alt_config_path = os.path.join('./cfg', filename)
+            if os.path.exists(alt_config_path):
+                config_path = alt_config_path
+            else:
+                raise FileNotFoundError(
+                    f"Config file not found: {config_path} or {alt_config_path}\n"
+                    "You may need to run the mod in-game once to generate the config files."
+                )
         
         parser.read(config_path)
         
@@ -60,11 +75,11 @@ def load_config():
         'shopOpen': os.path.join(base_path_listen, 'shopOpen.txt'),
     }
 
+    # Check for alternate commands file location
     if not os.path.exists(config['files']['commands']):
         config['files']['commands'] = os.path.join(base_path, 'twitchChannelPoints.cfg')
 
     config['version'] = '3.0.0'
-
     return config
 
 def is_chaos_enabled(config):
