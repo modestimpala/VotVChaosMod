@@ -6,6 +6,8 @@ from typing import Dict, Optional
 from twitchio import CustomReward, CustomRewardRedemption
 import aiohttp
 
+from src.dataclass.email_message import EmailCommandProcessor
+
 class ChannelPointsMixin:
     """Mixin class to handle channel points rewards."""
     
@@ -130,7 +132,7 @@ class ChannelPointsMixin:
 
         with open(commands_file, 'r') as file:
             for line in file:
-                parts = line.strip().split(';')
+                parts = line.strip().split('|')
                 if len(parts) == 6:
                     command = {
                         'title': parts[0],
@@ -142,7 +144,6 @@ class ChannelPointsMixin:
                     }
                     commands.append(command)
                 else:
-                    # TODO: fix ";fling" command returning invalid format
                     self.logger.warning(f"Invalid command format: {line.strip()}")
         return commands
     
@@ -173,25 +174,29 @@ class ChannelPointsMixin:
             {
                 'system': 'emails',
                 'title': 'Send Email',
-                'description': 'Send an email (Format: subject: <subject> body: <body> (optional user:Dr_Bao, etc) )',
-                'cost': self.config.get('email', {}).get('points_cost', 1000)
+                'description': 'Send an email. User is optional. (Format: subject:<subject> body:<body> user:Dr_Bao)',
+                'cost': self.config.get('emails', {}).get('points_cost', 1000),
             },
             {
                 'system': 'chatShop',
                 'title': 'Buy Shop Item',
-                'description': 'Purchase an item from the shop (Enter item name)',
-                'cost': self.config.get('shop', {}).get('points_cost', 1000)
+                'description': 'Purchase an item from the shop (Enter item name). Item List: https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt',
+                'cost': self.config.get('chatShop', {}).get('points_cost', 1000)
             },
             {
                 'system': 'hints',
                 'title': 'Send Hint',
-                'description': 'Send a hint to the streamer, optionally with a type. Format: (type) hint',
-                'cost': self.config.get('hint', {}).get('points_cost', 500)
+                'description': 'Send a hint to the streamer, optionally with a type. <Format: (type) hint> Possible types: info, warning, error, thought. Ex: (info) This is an info hint.',
+                'cost': self.config.get('hints', {}).get('points_cost', 500)
             }
         ]
 
         for system in special_systems:
-            if self.config.get(system['system'], {}).get('channel_points', False):
+            if system['cost'] < 1:
+                self.logger.error(f"Invalid cost for {system['system']}. Must be at least 1.")
+                continue
+
+            if self.config.get(system['system'], {}).get('channel_points', False) and self.config.get(system['system'], {}).get('enabled', False):
                 command = {
                     'id': f"{system['system']}_points",
                     'title': system['title'],
@@ -236,6 +241,10 @@ class ChannelPointsMixin:
         if not self.broadcaster:
             self.logger.error("Broadcaster not set. Cannot create custom reward.")
             return
+        
+        if command['pointCost'] < 1:
+            self.logger.error(f"Invalid point cost for command {command['title']} - must be at least 1")
+            return
 
         try:
             self.logger.debug(f"Attempting to create reward with data: {command}")
@@ -255,7 +264,7 @@ class ChannelPointsMixin:
             if existing_reward:
                 self.logger.info(f"Reward {command['title']} already exists")
                 return
-
+            
             reward = await self.broadcaster.create_custom_reward(
                 token=self.config['twitch']['oauth_token'],
                 title=command['title'],
@@ -308,8 +317,15 @@ class ChannelPointsMixin:
             if command_id:
                 self.logger.info(f"Channel points redeemed by {event.user.name} for command {command_id}")
                 if event.input:
-                    self.logger.info(f"User input: {event.input}")
-                await self.fulfill_redemption(event)
+                    if cmd_id == 'emails_points':
+                        await self.email_channel_points(event)
+                    elif cmd_id == 'chatShop_points':
+                        await self.shop_channel_points(event)
+                    elif cmd_id == 'hints_points':
+                        await self.hint_channel_points(event)
+                else:
+                    # This is a Chaos Command redemption
+                    await self.chaos_command_channel_points(event, command_id)
             else:
                 self.logger.warning(f"Received redemption for unknown reward ID: {event.reward.id}")
                 await self.refund_redemption(event)
@@ -320,6 +336,39 @@ class ChannelPointsMixin:
                 await self.refund_redemption(event)
             except Exception as refund_error:
                 self.logger.error(f"Failed to refund redemption after error: {refund_error}")
+
+    async def email_channel_points(self, event):
+        email_processor = EmailCommandProcessor()
+        email_message = email_processor.parse_email_string(event.input)
+        if not email_message:
+            self.logger.debug(f"Invalid email format: {event.input}")
+            await self.refund_redemption(event)
+            return
+        
+        if not email_message.user:
+            email_message.user = "user"
+            
+        await self.email_system.process_email(event.user.name, email_message.subject, email_message.body, None, email_message.user)
+        await self.fulfill_redemption(event)
+
+    async def shop_channel_points(self, event):
+        if not self.shop_system.is_in_shop_options(event.input):
+            self.logger.debug(f"Invalid shop item: {event.input}")
+            await self.refund_redemption(event)
+            return
+        
+        await self.shop_system.process_shop(event.input, event.user.name)
+        await self.fulfill_redemption(event)
+
+    async def hint_channel_points(self, event):
+        await self.hint_system.process_hint(event.input)
+        await self.fulfill_redemption(event)
+
+    async def chaos_command_channel_points(self, event, command_id):
+        # Handle chaos command redemption
+        await self.direct_file_handler.process_chaos_command("trigger_chaos", command_id)
+        await self.fulfill_redemption(event)
+        pass
 
     async def fulfill_redemption(self, event):
         """Mark a redemption as fulfilled."""
@@ -390,13 +439,9 @@ class ChannelPointsMixin:
         # Clear the rewards file after successful removal
         self.clear_rewards_file()
 
-
     async def close(self):
-        """Clean up PubSub connection and rewards."""
+        """Clean up rewards."""
         try:
-            if self.pubsub:
-                await self.pubsub.disconnect()
-                self.logger.info("Disconnected from PubSub")
             await self.remove_all_rewards()
         except Exception as e:
             self.logger.error(f"Error during cleanup: {e}")
