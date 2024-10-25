@@ -1,3 +1,4 @@
+import logging
 import time
 import json
 import os
@@ -12,6 +13,8 @@ class EmailSystem:
         self.master_file = config['files']['emails_master']
         self.twitch_connection = None
         self.direct_connection = None
+
+        self.logger = logging.getLogger(__name__)
 
         self.valid_users = [
             "Dr_Bao",
@@ -32,18 +35,18 @@ class EmailSystem:
     def set_direct_connection(self, direct_connection):
         self.direct_connection = direct_connection
 
-    async def process_email(self, twitch_user, subject, body, ctx, user="user"):
+    async def process_email(self, twitch_user, subject, body, ctx=None, user="user"):
         current_time = time.time()
 
         # Check if the user is valid
-        if user not in self.valid_users and self.twitch_connection is not None:
+        if user not in self.valid_users and ctx is not None:
             await self.twitch_connection.reply(ctx, "Please use a valid user. e.g Dr_Bao, Dr_Ken...")
             return
         
         if user not in self.valid_users and self.direct_connection is not None:
             user="user"
 
-        if self.twitch_connection is not None:
+        if ctx is not None:
             # Check if the user is on cooldown
             if twitch_user in self.email_cooldowns:
                 time_since_last_email = current_time - self.email_cooldowns[twitch_user]
@@ -55,7 +58,7 @@ class EmailSystem:
 
         # If not on cooldown, save the email and update the cooldown
         self.save_email(twitch_user, subject, body, user)
-        if self.twitch_connection is not None:
+        if ctx is not None:
             self.email_cooldowns[twitch_user] = current_time
 
     def save_email(self, twitch_user, subject, body, user="user"):
@@ -72,7 +75,7 @@ class EmailSystem:
         emails.append(email_data)
         self.write_master_file(emails)
         
-        print(f"Email saved for {twitch_user}")
+        self.logger.debug(f"Email saved for {twitch_user}")
 
     def read_master_file(self):
         if os.path.exists(self.master_file):
