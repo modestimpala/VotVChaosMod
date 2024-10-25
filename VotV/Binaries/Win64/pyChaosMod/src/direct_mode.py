@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import time
 import websockets
 import json
 import webbrowser
@@ -28,32 +27,32 @@ class DirectModeHandler:
         
 
     async def start(self):
-        server_url = "wss://votv.moddy.dev/chaos-kawfee/ws"
+        server_url = "wss://votv.moddy.dev/chaos/ws"
         ssl_context = ssl.create_default_context()
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE  
 
-        if self.config['direct']['panelphotos']:
-            asyncio.create_task(self.send_panel_image())
-
         try:
-            self.websocket = await websockets.connect(server_url, ssl=ssl_context)
+            self.websocket = await websockets.connect(
+                server_url, 
+                ssl=ssl_context
+            )
             logger.info(f"Connected to WebSocket server at {server_url}")
             
             # Request a new session with panel username
             await self.websocket.send(json.dumps({
                 "action": "request_session",
-                "panelUsername": self.config['direct']['panelusername']
+                "panelUsername": self.config['direct']['panel_username']
             }))
             response = await self.websocket.recv()
             data = json.loads(response)
             
             if data.get("action") == "session_created":
                 self.session_key = data.get("key")
-                captcha_url = f"https://votv.moddy.dev/chaos-kawfee/panel/{self.session_key}/captcha"
+                captcha_url = f"https://votv.moddy.dev/chaos/panel/{self.session_key}/captcha"
                 logger.info(f"Opening captcha page: {captcha_url}")
                 webbrowser.open(captcha_url)
-            
+
                 await self.handle_messages()
             else:
                 logger.error("Failed to create session")
@@ -67,8 +66,17 @@ class DirectModeHandler:
                 if data.get("action") == "captcha_verified":
                     self.captcha_verified = True
                     logger.info("Captcha verified. Control panel is now accessible.")
-                    panel_url = f"https://votv.moddy.dev/chaos-kawfee/panel/{self.session_key}"
+                    panel_url = f"https://votv.moddy.dev/chaos/panel/{self.session_key}"
                     logger.info(f"Control panel URL: {panel_url}")
+                    if self.config.get('direct', {}).get('publish_panel', False):
+                        logger.warning("Publishing to AriralChat. Your session will be publicly visible to others.")
+                        await self.websocket.send(json.dumps({
+                            "action": "publish_ariralchat",
+                            "key": self.session_key
+                        }))
+
+                    if self.config['direct']['panel_photos']:
+                        asyncio.create_task(self.send_panel_image())
                 elif data.get("action") == "command" and self.captcha_verified:
                     await self.handle_command(data.get("command"), data.get("params"))
         except websockets.exceptions.ConnectionClosed:
@@ -99,29 +107,28 @@ class DirectModeHandler:
         logger.info(f"Processed command: {command} with params: {params}")
 
     async def send_panel_image(self):
+        last_image = None
         while True:
             try:
-                # Check if the panel image file exists
                 if not os.path.exists('./png/panelPhoto.txt'):
                     await asyncio.sleep(6)
                     continue
 
-                # Read the base64 image data from the file
                 with open('./png/panelPhoto.txt', 'r') as f:
-                    base64_image = f.read().strip()
+                    base64_string = f.read().strip()
                 
-                # Send the image data via WebSocket
-                if self.websocket and self.captcha_verified:
+                # Only send if image changed
+                if base64_string != last_image and self.websocket and self.captcha_verified:
                     await self.websocket.send(json.dumps({
                         "action": "update_panel_image",
-                        "image": base64_image
+                        "image": base64_string  # Send original without compression
                     }))
+                    last_image = base64_string
                 
-                # Wait for 6 seconds before sending the next image
                 await asyncio.sleep(6)
             except Exception as e:
                 logger.error(f"Error sending panel image: {e}")
-                await asyncio.sleep(6)  # Wait before retrying
+                await asyncio.sleep(6)
 
     async def close(self):
         if self.websocket:
