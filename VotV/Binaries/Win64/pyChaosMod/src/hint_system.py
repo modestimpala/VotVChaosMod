@@ -10,7 +10,6 @@ class HintSystem:
     
     def __init__(self, config):
         self.config = config
-        self.hints_enabled = True
         self.hint_cooldowns = {}
         self.master_file = config['files']['hints_master']
         self.twitch_connection = None
@@ -55,7 +54,7 @@ class HintSystem:
         1. process_hint(full_hint, ctx=ctx) - parses the full hint string
         2. process_hint(type, hint, ctx) - traditional way with separate type and hint
         """
-        if not self.hints_enabled:
+        if not self.config['hints'].get('enabled', False):
             return
             
         current_time = time.time()
