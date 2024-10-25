@@ -1,3 +1,4 @@
+import logging
 import time
 import json
 import os
@@ -14,19 +15,21 @@ class ShopSystem:
         self.direct_connection = None
         self.shop_options = self.get_shop_options()
 
+        self.logger = logging.getLogger(__name__)
+
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
 
     def set_direct_connection(self, direct_connection):
         self.direct_connection = direct_connection
 
-    async def process_shop(self, item, ctx, username="direct", amount=1):
+    async def process_shop(self, item, username="direct", ctx=None, amount=1):
         if not self.config['chatShop'].get('enabled', False):
             return
        
         current_time = time.time()
 
-        if self.twitch_connection is not None:
+        if ctx is not None:
             # Check user cooldown
             if username in self.user_shop_cooldowns:
                 time_since_last_use = current_time - self.user_shop_cooldowns[username]
@@ -47,7 +50,7 @@ class ShopSystem:
             "processed": False
         }
 
-        print(f"Shop order processed for {username}: {item}")
+        self.logger.debug(f"Shop order processed for {username}: {item}")
         orders = self.read_master_file()
         orders.append(shop_data)
         self.write_master_file(orders)
@@ -75,14 +78,19 @@ class ShopSystem:
         return False
 
     def update(self):
-        # if the shop just opened, broadcast a message
-        if self.is_shop_open() and not self.shopOpen and self.twitch_connection is not None:
-            announcement = self.config['chatShop']['announcement_message'].format(duration=self.config['chatShop']['open_duration'])
-            asyncio.create_task(self.twitch_connection.queue_message(announcement))
-            self.shopOpen = True
-        elif not self.is_shop_open() and self.shopOpen and self.twitch_connection is not None:
-            self.shopOpen = False
-        pass
+        # if using channel points, don't broadcast shop status, shop is always open
+        if not self.config.get('chatShop', {}).get('channel_points', False):
+            # if the shop just opened, broadcast a message
+            if self.is_shop_open() and not self.shopOpen:
+                announcement = self.config['chatShop']['announcement_message'].format(duration=self.config['chatShop']['open_duration'])
+                asyncio.create_task(self.twitch_connection.queue_message(announcement))
+                self.shopOpen = True
+            elif not self.is_shop_open() and self.shopOpen and self.twitch_connection is not None:
+                self.shopOpen = False
+            pass
+
+    def is_in_shop_options(self, item):
+        return item in self.shop_options
 
     def get_shop_options(self):
         file = "list_store.txt"
