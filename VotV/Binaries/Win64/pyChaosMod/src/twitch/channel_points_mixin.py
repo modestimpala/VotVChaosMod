@@ -62,7 +62,7 @@ class ChannelPointsMixin:
                             reward = await self.get_existing_reward(reward_data['reward_id'])
                             if reward:
                                 await reward.delete(token=self.config['twitch']['oauth_token'])
-                                self.logger.info(f"Deleted leftover reward: {reward_data['title']}")
+                                self.logger.debug(f"Deleted leftover reward: {reward_data['title']}")
                             else:
                                 self.logger.warning(f"Reward {reward_data['reward_id']} no longer exists")
                         
@@ -87,7 +87,7 @@ class ChannelPointsMixin:
             if self.broadcaster:
                 self.broadcaster = self.broadcaster[0]
                 self.channel_id = self.broadcaster.id
-                self.logger.info(f"Got broadcaster: {self.broadcaster.name} (ID: {self.channel_id})")
+                self.logger.debug(f"Got broadcaster: {self.broadcaster.name} (ID: {self.channel_id})")
             else:
                 self.logger.error(f"No user found for channel: {self.config['twitch']['channel']}")
         except Exception as e:
@@ -161,9 +161,13 @@ class ChannelPointsMixin:
         """Create channel point rewards."""
         # First create special system rewards if enabled
         await self.create_special_system_rewards()
-        
+
         # Then create regular command rewards
         commands = self.load_commands()
+        enabled_commands_count = sum(1 for cmd in commands if cmd['isEnabledForPoints'])
+        if enabled_commands_count > 0:
+            self.logger.info(f"Creating {enabled_commands_count} channel point rewards...")
+
         for cmd in commands:
             if cmd['isEnabledForPoints']:
                 await self.create_custom_reward(cmd)
@@ -191,6 +195,14 @@ class ChannelPointsMixin:
             }
         ]
 
+        
+        enabled_systems_count = sum(
+            1 for system in special_systems
+            if self.config.get(system['system'], {}).get('channel_points', False) and self.config.get(system['system'], {}).get('enabled', False)
+        )
+        if enabled_systems_count > 0:
+            self.logger.info(f"Creating special system rewards...")
+
         for system in special_systems:
             if system['cost'] < 1:
                 self.logger.error(f"Invalid cost for {system['system']}. Must be at least 1.")
@@ -215,7 +227,7 @@ class ChannelPointsMixin:
                             break
 
                     if existing_reward:
-                        self.logger.info(f"Special reward for {system['system']} already exists")
+                        self.logger.debug(f"Special reward for {system['system']} already exists")
                         continue
 
                     reward = await self.broadcaster.create_custom_reward(
@@ -229,7 +241,7 @@ class ChannelPointsMixin:
                     )
 
                     self.rewards[command['id']] = reward
-                    self.logger.info(f"Created special reward for {system['system']}")
+                    self.logger.debug(f"Created special reward for {system['system']}")
                     self.save_rewards()
 
                 except Exception as e:
@@ -262,7 +274,7 @@ class ChannelPointsMixin:
                     break
 
             if existing_reward:
-                self.logger.info(f"Reward {command['title']} already exists")
+                self.logger.debug(f"Reward {command['title']} already exists")
                 return
             
             reward = await self.broadcaster.create_custom_reward(
@@ -276,7 +288,7 @@ class ChannelPointsMixin:
             )
             
             self.rewards[command['id']] = reward
-            self.logger.info(f"Created custom reward: {command['title']}")
+            self.logger.debug(f"Created custom reward: {command['title']}")
             
             # Save rewards after each creation
             self.save_rewards()
@@ -315,7 +327,7 @@ class ChannelPointsMixin:
                     break
 
             if command_id:
-                self.logger.info(f"Channel points redeemed by {event.user.name} for command {command_id}")
+                self.logger.debug(f"Channel points redeemed by {event.user.name} for command {command_id}")
                 if event.input:
                     if cmd_id == 'emails_points':
                         await self.email_channel_points(event)
