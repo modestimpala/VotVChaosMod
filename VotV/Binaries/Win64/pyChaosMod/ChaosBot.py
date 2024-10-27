@@ -107,17 +107,31 @@ def is_already_running():
             pass
     return False
 
-async def shutdown(twitch_connection, signal_received=None):
+async def shutdown(tasks, signal_received=None):
     if signal_received:
         logger.info(f"Received signal {signal_received}. Shutting down gracefully...")
     else:
         logger.info("Shutting down gracefully...")
     
+    # Convert single task to list if necessary
+    tasks = [tasks] if not isinstance(tasks, list) else tasks
+    
     try:
-        await twitch_connection.close()
+        # Cancel all tasks
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        
+        # Wait for all tasks to complete with a timeout
+        await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Optional: Wait a short time for tasks to clean up
+        await asyncio.sleep(1)
+        
     except Exception as e:
-        logger.error(f"Error during Twitch connection closure: {e}")
-    logger.info("ChaosBot has been shut down.")
+        logger.error(f"Error during shutdown: {str(e)}")
+    finally:
+        logger.info("ChaosBot has been shut down.")
 
 async def main():
     logger.info("Starting ChaosBot")
@@ -141,14 +155,26 @@ async def main():
     shop_system = ShopSystem(config)
     hint_system = HintSystem(config)
 
+    voting_system = VotingSystem(config)
 
+    # Initialize Twitch connection
+    twitch_connection = TwitchConnection(
+        config, 
+        voting_system,
+        email_system, 
+        shop_system, 
+        hint_system
+    )
+    
+    # Only initialize Direct Mode if enabled
+    direct_connection = None
     if config['direct']['enabled']:
-        logger.info("Starting in Direct Mode")
-        connection = DirectModeHandler(config, email_system, shop_system, hint_system)
-    else:
-        logger.info("Starting in Twitch Mode")
-        voting_system = VotingSystem(config)
-        connection = TwitchConnection(config, voting_system, email_system, shop_system, hint_system)
+        direct_connection = DirectModeHandler(
+            config, 
+            email_system, 
+            shop_system, 
+            hint_system
+        )
 
     logger.info("Starting Connection")
 
@@ -158,40 +184,51 @@ async def main():
         logger.info(f"Received signal {sig}")
         shutdown_event.set()
 
+    tasks = []
+
+    twitch_task = asyncio.create_task(
+        twitch_connection.start(),
+        name="twitch_mode"
+    )
+    tasks.append(twitch_task)
+    
+    # Start Direct Mode only if enabled
+    if direct_connection:
+        logger.info("Starting Direct Mode")
+        direct_task = asyncio.create_task(
+            direct_connection.start(),
+            name="direct_mode"
+        )
+        tasks.append(direct_task)
+
     # Set up signal handlers
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, signal_handler)
 
     try:
-        connection_task = asyncio.create_task(connection.start())
         shutdown_task = asyncio.create_task(shutdown_event.wait())
+        tasks.append(shutdown_task)
 
         done, pending = await asyncio.wait(
-            [connection_task, shutdown_task],
+            tasks,
             return_when=asyncio.FIRST_COMPLETED
         )
 
         if shutdown_task in done:
-            logger.info("Shutdown event received, closing connection...")
-            connection_task.cancel()
-            try:
-                await connection_task
-            except asyncio.CancelledError:
-                pass
-        
-        for task in pending:
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+            logger.info("Shutdown event received, closing connections...")
+            for task in tasks:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
     except Exception as e:
         logger.error(f"An error occurred during bot execution: {e}")
         logger.error("Full traceback:")
         traceback.print_exc()
     finally:
-        await shutdown(connection)
+        await shutdown(tasks)
 
 if __name__ == "__main__":
     if is_already_running():
