@@ -45,7 +45,8 @@ class DirectModeHandler:
             # Request a new session with panel username
             await self.websocket.send(json.dumps({
                 "action": "request_session",
-                "panelUsername": self.config['direct']['panel_username']
+                "panelUsername": self.config['direct']['panel_username'],
+                "panelCooldown": self.config['direct'].get('panel_cooldown', 0)
             }))
             response = await self.websocket.recv()
             data = json.loads(response)
