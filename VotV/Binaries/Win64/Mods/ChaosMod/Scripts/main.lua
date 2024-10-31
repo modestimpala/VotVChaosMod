@@ -866,39 +866,6 @@ local function clearEvents()
     end
 end
 
--- Toggle emails
-local function toggleEmails()
-    emailsEnabled = not emailsEnabled
-    
-    local findWindow = FindFirstOf("votingMenu_C")
-    if findWindow:IsValid() then
-        ExecuteInGameThread(function()
-            findWindow:toggleEmails()
-        end)
-    end
-
-
-    if emailsEnabled then
-        local file = io.open(config.files.emails_enable, "w")
-        file:write("true")
-        file:close()
-        LoopAsync(1000, function()
-            if not emailsEnabled then
-                return true
-            end
-            processNewEmails()
-        end)
-    else
-        os.remove(config.files.emails_enable)
-        local emailHandler = FindFirstOf("emailHandler_C")
-        if emailHandler:IsValid() then
-            ExecuteInGameThread(function() 
-                emailHandler:K2_DestroyActor()
-            end)
-        end
-    end
-end
-
 -- Console Commands
 RegisterConsoleCommandHandler(("launchChaosBot"), function(full, args)
     launchChaosBot()
@@ -907,11 +874,6 @@ end)
 
 RegisterConsoleCommandHandler(("clearEvents"), function(full, args)
     clearEvents()
-    return true
-end)
-
-RegisterConsoleCommandHandler(("toggleEmails"), function(full, args)
-    toggleEmails()
     return true
 end)
 
