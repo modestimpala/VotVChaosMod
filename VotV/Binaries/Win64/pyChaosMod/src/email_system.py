@@ -100,7 +100,7 @@ class EmailSystem:
 
     def update(self):
         if self.twitch_connection is not None:
-            self.emails_enabled = os.path.exists(self.config['files']['emails_enable'])
+            self.emails_enabled = self.config.get('emails', {}).get('enabled', False)
         current_time = time.time()
         for twitch_user, cooldown_time in list(self.email_cooldowns.items()):
             if current_time - cooldown_time >= self.email_cooldown_time:
