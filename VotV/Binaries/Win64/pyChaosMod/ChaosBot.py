@@ -13,6 +13,7 @@ import traceback
 import logging
 from logging.handlers import RotatingFileHandler
 from src.direct_mode import DirectModeHandler  
+from src.task_manager import TaskManager
 import requests
 import subprocess
 
@@ -157,78 +158,61 @@ async def main():
 
     voting_system = VotingSystem(config)
 
-    # Initialize Twitch connection
-    twitch_connection = TwitchConnection(
-        config, 
-        voting_system,
-        email_system, 
-        shop_system, 
-        hint_system
-    )
-    
-    # Only initialize Direct Mode if enabled
-    direct_connection = None
-    if config['direct']['enabled']:
-        direct_connection = DirectModeHandler(
-            config, 
-            email_system, 
-            shop_system, 
-            hint_system
-        )
-
     logger.info("Starting Connection")
 
+    task_manager = TaskManager()
     shutdown_event = asyncio.Event()
     
     def signal_handler(sig, frame):
         logger.info(f"Received signal {sig}")
         shutdown_event.set()
 
-    tasks = []
-
-    twitch_task = asyncio.create_task(
-        twitch_connection.start(),
-        name="twitch_mode"
-    )
-    tasks.append(twitch_task)
-    
-    # Start Direct Mode only if enabled
-    if direct_connection:
-        logger.info("Starting Direct Mode")
-        direct_task = asyncio.create_task(
-            direct_connection.start(),
-            name="direct_mode"
-        )
-        tasks.append(direct_task)
-
     # Set up signal handlers
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, signal_handler)
 
     try:
-        shutdown_task = asyncio.create_task(shutdown_event.wait())
-        tasks.append(shutdown_task)
+        tasks = []
 
-        done, pending = await asyncio.wait(
-            tasks,
-            return_when=asyncio.FIRST_COMPLETED
-        )
+        # Start Twitch connection if enabled
+        if config['twitch']['enabled']:
+            twitch_connection = TwitchConnection(
+                config, voting_system, email_system, shop_system, hint_system
+            )
+            tasks.append(
+                asyncio.create_task(
+                    task_manager.start_task(
+                        "twitch_mode",
+                        twitch_connection.start
+                    )
+                )
+            )
 
-        if shutdown_task in done:
-            logger.info("Shutdown event received, closing connections...")
-            for task in tasks:
-                task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
+        # Start Direct Mode if enabled
+        if config['direct']['enabled']:
+            direct_connection = DirectModeHandler(
+                config, email_system, shop_system, hint_system
+            )
+            tasks.append(
+                asyncio.create_task(
+                    task_manager.start_task(
+                        "direct_mode",
+                        direct_connection.start
+                    )
+                )
+            )
 
+        # Wait for shutdown signal
+        await shutdown_event.wait()
+        
     except Exception as e:
-        logger.error(f"An error occurred during bot execution: {e}")
+        logger.error(f"An error occurred in main loop: {e}")
         logger.error("Full traceback:")
         traceback.print_exc()
     finally:
-        await shutdown(tasks)
+        logger.info("Shutting down task manager...")
+        await task_manager.stop_all()
+        logger.info("ChaosBot shutdown complete")
 
 if __name__ == "__main__":
     if is_already_running():
