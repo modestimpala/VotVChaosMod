@@ -175,32 +175,42 @@ async def main():
         tasks = []
 
         # Start Twitch connection if enabled
-        if config['twitch']['enabled']:
-            twitch_connection = TwitchConnection(
-                config, voting_system, email_system, shop_system, hint_system
-            )
-            tasks.append(
-                asyncio.create_task(
-                    task_manager.start_task(
-                        "twitch_mode",
-                        twitch_connection.start
+        try:
+            if config['twitch']['enabled']:
+                twitch_connection = TwitchConnection(
+                    config, voting_system, email_system, shop_system, hint_system
+                )
+                tasks.append(
+                    asyncio.create_task(
+                        task_manager.start_task(
+                            "twitch_mode",
+                            twitch_connection.start
+                        )
                     )
                 )
-            )
+        except KeyError as e:
+            logger.error(f'Incorrect config entry in twitch.cfg: {e}')
+            logger.error('Please make sure the config file is correct and try again.')
+            logger.debug(traceback.format_exc())
 
-        # Start Direct Mode if enabled
-        if config['direct']['enabled']:
-            direct_connection = DirectModeHandler(
-                config, email_system, shop_system, hint_system
-            )
-            tasks.append(
-                asyncio.create_task(
-                    task_manager.start_task(
-                        "direct_mode",
-                        direct_connection.start
+        try: 
+            # Start Direct Mode if enabled
+            if config['direct']['enabled']:
+                direct_connection = DirectModeHandler(
+                    config, email_system, shop_system, hint_system
+                )
+                tasks.append(
+                    asyncio.create_task(
+                        task_manager.start_task(
+                            "direct_mode",
+                            direct_connection.start
+                        )
                     )
                 )
-            )
+        except KeyError as e:
+            logger.error(f'Incorrect config entry in direct.cfg: {e}')
+            logger.error('Please make sure the config file is correct and try again.')
+            logger.debug(traceback.format_exc())
 
         # Wait for shutdown signal
         await shutdown_event.wait()
