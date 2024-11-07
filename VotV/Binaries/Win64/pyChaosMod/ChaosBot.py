@@ -17,6 +17,10 @@ def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
+    # Set specific level for twitchio.websocket
+    twitchio_logger = logging.getLogger('twitchio.websocket')
+    twitchio_logger.setLevel(logging.ERROR)  # Change to ERROR to reduce websocket noise
+
     # Create logs directory if it doesn't exist
     log_dir = 'logs'
     if not os.path.exists(log_dir):
@@ -26,12 +30,25 @@ def setup_logging():
     file_handler = RotatingFileHandler(
         filename=os.path.join(log_dir, 'chaosbot.log'),
         maxBytes=5*1024*1024,  # 5MB
-        backupCount=5
+        backupCount=5,
+        encoding='utf-8'  # Specify UTF-8 encoding
     )
     file_handler.setLevel(logging.DEBUG)
 
     # Create console handler with a higher log level
-    console_handler = logging.StreamHandler()
+    class UnicodeStreamHandler(logging.StreamHandler):
+        def emit(self, record):
+            try:
+                msg = self.format(record)
+                stream = self.stream
+                # Replace problematic characters with their Unicode escape sequences
+                msg = msg.encode('unicode_escape').decode('ascii')
+                stream.write(msg + self.terminator)
+                self.flush()
+            except Exception:
+                self.handleError(record)
+
+    console_handler = UnicodeStreamHandler()
     console_handler.setLevel(logging.INFO)
 
     # Create formatter and add it to the handlers
