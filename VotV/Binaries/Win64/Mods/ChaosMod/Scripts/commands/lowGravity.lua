@@ -7,7 +7,6 @@ return {
         WorldSettings.GlobalGravityZ = -200
         ExecuteWithDelay(180000, function()
             WorldSettings.bGlobalGravitySet = false
-            Hint("Normal gravity!")
         end)
         return true
     end

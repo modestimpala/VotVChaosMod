@@ -6,7 +6,6 @@ return {
         mainGame.Immortal = true
         ExecuteWithDelay(180000, function()
             mainGame.Immortal = false
-            Hint("Immortality has ended")
         end)
         return true
     end
