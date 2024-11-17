@@ -2,16 +2,54 @@ import os
 import signal
 import sys
 import psutil
-from src.twitch_connection import TwitchConnection
-from src.message_handler import MessageHandler
+from src.hint_system import HintSystem
+from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
-from src.utils import load_config
+from src.utils.config import load_config
 import asyncio
 import traceback
 import logging
 from logging.handlers import RotatingFileHandler
+from src.direct_mode import DirectModeHandler  
+from src.task_manager import TaskManager
+import requests
+import subprocess
+
+VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/3.0.0/chaosbot_version.txt"
+DOWNLOAD_URL = "https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip"
+
+def check_for_updates(current_version):
+    try:
+        response = requests.get(VERSION_URL)
+        latest_version = response.text.strip()
+        return latest_version > current_version
+    except Exception as e:
+        logger.error(f"Failed to check for updates: {e}")
+        return False
+    
+
+def check_for_updates(current_version):
+    try:
+        response = requests.get(VERSION_URL)
+        latest_version = response.text.strip()
+        return latest_version > current_version
+    except Exception as e:
+        logger.error(f"Failed to check for updates: {e}")
+        return False
+
+def start_update_process():
+    try:
+        updater_path = os.path.join(os.path.dirname(sys.executable), "ChaosBot_Updater.exe")
+        if os.path.exists(updater_path):
+            subprocess.Popen([updater_path, sys.executable])
+            logger.info("Update process started. Exiting current instance.")
+            sys.exit(0)
+        else:
+            logger.error("Updater executable not found.")
+    except Exception as e:
+        logger.error(f"Failed to start update process: {e}")
 
 def setup_logging():
     logger = logging.getLogger()
@@ -86,33 +124,59 @@ def is_already_running():
             pass
     return False
 
-async def shutdown(twitch_connection, signal_received=None):
+async def shutdown(tasks, signal_received=None):
     if signal_received:
         logger.info(f"Received signal {signal_received}. Shutting down gracefully...")
     else:
         logger.info("Shutting down gracefully...")
     
+    # Convert single task to list if necessary
+    tasks = [tasks] if not isinstance(tasks, list) else tasks
+    
     try:
-        await twitch_connection.close()
+        # Cancel all tasks
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        
+        # Wait for all tasks to complete with a timeout
+        await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Optional: Wait a short time for tasks to clean up
+        await asyncio.sleep(1)
+        
     except Exception as e:
-        logger.error(f"Error during Twitch connection closure: {e}")
-    logger.info("ChaosBot has been shut down.")
+        logger.error(f"Error during shutdown: {str(e)}")
+    finally:
+        logger.info("ChaosBot has been shut down.")
 
 async def main():
     logger.info("Starting ChaosBot")
     logger.info("Loading config")
     config = load_config()
+
+    if getattr(sys, 'frozen', False):
+        current_version = config.get('version', '0.0.0')
+        logger.info(f"Current version: {current_version}")
+        if check_for_updates(current_version):
+            logger.info("New version available. Starting update process...")
+            start_update_process()
+        else:
+            logger.info("No updates available.")
+    else:
+        logger.warning("ChaosBot is running in development mode. Automatic updates are disabled.")
    
     logger.info("Establishing subsystems")
     
     email_system = EmailSystem(config)
     shop_system = ShopSystem(config)
+    hint_system = HintSystem(config)
+
     voting_system = VotingSystem(config)
-   
-    twitch_connection = TwitchConnection(config, voting_system, email_system, shop_system)
 
-    logger.info("Starting Twitch Connection")
+    logger.info("Starting Connection")
 
+    task_manager = TaskManager()
     shutdown_event = asyncio.Event()
     
     def signal_handler(sig, frame):
@@ -124,35 +188,47 @@ async def main():
         signal.signal(sig, signal_handler)
 
     try:
-        twitch_task = asyncio.create_task(twitch_connection.start())
-        shutdown_task = asyncio.create_task(shutdown_event.wait())
+        tasks = []
 
-        done, pending = await asyncio.wait(
-            [twitch_task, shutdown_task],
-            return_when=asyncio.FIRST_COMPLETED
-        )
+        # Start Twitch connection if enabled
+        if config['twitch']['enabled']:
+            twitch_connection = TwitchConnection(
+                config, voting_system, email_system, shop_system, hint_system
+            )
+            tasks.append(
+                asyncio.create_task(
+                    task_manager.start_task(
+                        "twitch_mode",
+                        twitch_connection.start
+                    )
+                )
+            )
 
-        if shutdown_task in done:
-            logger.info("Shutdown event received, closing Twitch connection...")
-            twitch_task.cancel()
-            try:
-                await twitch_task
-            except asyncio.CancelledError:
-                pass
+        # Start Direct Mode if enabled
+        if config['direct']['enabled']:
+            direct_connection = DirectModeHandler(
+                config, email_system, shop_system, hint_system
+            )
+            tasks.append(
+                asyncio.create_task(
+                    task_manager.start_task(
+                        "direct_mode",
+                        direct_connection.start
+                    )
+                )
+            )
+
+        # Wait for shutdown signal
+        await shutdown_event.wait()
         
-        for task in pending:
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
-
     except Exception as e:
-        logger.error(f"An error occurred during bot execution: {e}")
+        logger.error(f"An error occurred in main loop: {e}")
         logger.error("Full traceback:")
         traceback.print_exc()
     finally:
-        await shutdown(twitch_connection)
+        logger.info("Shutting down task manager...")
+        await task_manager.stop_all()
+        logger.info("ChaosBot shutdown complete")
 
 if __name__ == "__main__":
     if is_already_running():

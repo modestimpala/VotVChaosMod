@@ -1,20 +1,25 @@
-import queue
 import re
 import logging
-from logging.handlers import RotatingFileHandler
-import os
 import asyncio
-from twitchio.ext import commands
+from src.utils.chaos_file_handler import ChaosFileHandler
+from src.twitch.pubsub_mixin import PubSubMixin
+from src.twitch.channel_points_mixin import ChannelPointsMixin
+from src.dataclass.email_message import EmailCommandProcessor
+from twitchio.ext import commands, pubsub
 
-class TwitchConnection(commands.Bot):
-    def __init__(self, config, voting_system, email_system, shop_system):
 
+class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
+    """Class to handle the Twitch connection for the bot."""
+    def __init__(self, config, voting_system, email_system, shop_system, hint_system):
         self.voting_system = voting_system
         self.email_system = email_system
         self.shop_system = shop_system
+        self.hint_system = hint_system
 
         self.shop_system.set_twitch_connection(self)
         self.email_system.set_twitch_connection(self)
+
+        self.direct_file_handler = ChaosFileHandler(config['files']['direct_master'])
 
         self.config = config
         self.message_queue = asyncio.Queue()
@@ -28,7 +33,7 @@ class TwitchConnection(commands.Bot):
 
         self.logger.info("Initializing Twitch Connection...")
 
-        if self.config['twitch']['oauth_token'] == 'notset' or self.config['twitch']['bot_username'] == 'notset' or self.config['twitch']['channel'] == 'notset':
+        if self.config['twitch']['oauth_token'] == 'notset' or self.config['twitch']['channel'] == 'notset':
             raise ValueError("Twitch OAuth token, bot username, or channel not set in config file")
         
         super().__init__(
@@ -38,6 +43,7 @@ class TwitchConnection(commands.Bot):
         )
 
     async def start(self):
+        """Start the Twitch connection."""
         self.logger.info("Starting Twitch Connection...")
         try:
             await super().start()
@@ -54,6 +60,7 @@ class TwitchConnection(commands.Bot):
             self.logger.info("Twitch Connection closing...")
 
     async def update_systems(self):
+        """Update the various systems in the bot."""
         while self.should_run:
             self.voting_system.update()
             self.email_system.update()
@@ -63,12 +70,26 @@ class TwitchConnection(commands.Bot):
     async def event_ready(self):
         self.logger.info(f'Logged in as | {self.nick}')
         self.is_connected = True
+
+        # Initialize channel points system if enabled
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.initialize_channel_points()
+            await self.initialize_pubsub()
+
         self.loop.create_task(self.process_message_queue())
         self.loop.create_task(self.update_systems())
         self.logger.info("ChaosBot is now running...")
         self.logger.info("Use Ctrl+C to stop the bot gracefully.")
+        if self.config.get('twitch', {}).get('channel_points', False):
+            self.logger.info("Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
+
+    async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
+        """Handle channel point redemption events from PubSub."""
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.handle_redemption(event)
 
     async def process_message_queue(self):
+        """Process the message queue."""
         while self.should_run:
             try:
                 message = await asyncio.wait_for(self.message_queue.get(), timeout=1.0)
@@ -78,6 +99,7 @@ class TwitchConnection(commands.Bot):
                 pass  # This allows the loop to check should_run regularly
     
     async def queue_message(self, message):
+        """Queue a message to be sent."""
         await self.message_queue.put(message)
 
     async def event_message(self, ctx):
@@ -89,13 +111,16 @@ class TwitchConnection(commands.Bot):
             self.voting_system.process_vote(ctx.author.name, int(ctx.content))
 
     async def reply(self, ctx, message):
+        """Reply to a ctx message in the Twitch chat."""
         await ctx.reply(message)
 
     async def send_message(self, message):
+        """Send a message to the Twitch chat."""
         channel = self.get_channel(self.config['twitch']['channel'])
         await channel.send(message)
 
     def get_messages(self):
+        """Get all messages from the message queue."""
         messages = []
         while not self.message_queue.empty():
             messages.append(self.message_queue.get())
@@ -103,16 +128,24 @@ class TwitchConnection(commands.Bot):
 
     @commands.command()
     async def shop(self, ctx, item : str | None):
+        """Command to interact with the shop system."""
+        if self.config.get('chatShop', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to interact with the shop.")
+            return
         if item is None:
             await ctx.reply(f"You can order items from the shop using !shop <item>. The shop is currently {'open' if self.shop_system.is_shop_open() else 'closed'}.")
             return
         if not self.shop_system.is_shop_open():
             await ctx.reply(f"The shop is currently closed. Please wait for it to open.")
             return
-        await self.shop_system.process_shop(ctx.author.name, item, ctx)
+        await self.shop_system.process_shop(item, ctx.author.name, ctx)
 
     @commands.command()
     async def email(self, ctx: commands.Context):
+        """Command to send emails."""
+        if self.config.get('emails', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to send emails.")
+            return
         if not self.email_system.are_emails_enabled():
             await ctx.reply("Emails are currently disabled.")
             return
@@ -120,34 +153,45 @@ class TwitchConnection(commands.Bot):
         # Remove the command name from the message
         content = ctx.message.content.split(maxsplit=1)[1] if len(ctx.message.content.split()) > 1 else ""
 
-        # Try to split the content into subject and body
-        try:
-            subject, body = content.split("body:", 1)
-            subject = subject.replace("subject:", "").strip()
-            body = body.strip()
-        except ValueError:
-            await ctx.reply("To send emails, type !email subject:<email subject> body:<email body>")
+        # Parse the email message
+        email_processor = EmailCommandProcessor()
+        email_message = email_processor.parse_email_string(content)
+        
+        if not email_message:
+            await ctx.reply("To send emails, use the format: !email subject:<email subject> body:<email body> [user:<username>]")
             return
+        
+        if not email_message.user:
+            email_message.user = "user"
+        
+        await self.email_system.process_email(ctx.author.name, email_message.subject, email_message.body, ctx, email_message.user)
 
-        if not subject or not body:
-            await ctx.reply("Both subject and body are required. Type !email for help.")
+    async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
+        """Command to send hints."""
+        if self.config.get('hints', {}).get('channel_points', False):
+            await ctx.reply("Please use channel points to send hints.")
             return
-        await self.email_system.process_email(ctx.author.name, subject, body, ctx)
+        await self.hint_system.process_hint(hint_type, hint_text, ctx)
 
 
     def is_connected_to_twitch(self):
+        """Check if the bot is connected to Twitch."""
         return self.is_connected
     
     async def close(self):
+        """Clean up and close connections."""
         self.logger.info("Closing Twitch Connection...")
         self.should_run = False
-        # Wait for queued messages to be sent
+
+        if self.config.get('twitch', {}).get('channel_points', False):
+            await self.remove_all_rewards()
+
         while not self.message_queue.empty():
             try:
                 await asyncio.wait_for(self.message_queue.get(), timeout=0.1)
             except asyncio.TimeoutError:
                 break
-        # Close the underlying connection
+
         try:
             await super().close()
         except Exception as e:

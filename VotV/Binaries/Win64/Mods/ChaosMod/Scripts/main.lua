@@ -354,8 +354,8 @@ function load_command_module(command_name)
         if success then
             command_modules[command_name] = module
         else
-            print("Failed to load command module: " .. command_name)
-            print("Error: " .. module)
+            print("[ChaosMod] Failed to load command module: " .. command_name)
+            print("[ChaosMod] Error: " .. module)
             return nil
         end
     end
@@ -363,7 +363,7 @@ function load_command_module(command_name)
 end
 
 function ExecuteCommand(commandName)
-    print("Executing command: " .. commandName)
+    print("[ChaosMod] Executing command: " .. commandName)
 
     local module = load_command_module(commandName)
     if module and module.execute then
@@ -371,7 +371,7 @@ function ExecuteCommand(commandName)
             module.execute()
         end)
     else
-        print("Failed to execute command: " .. commandName)
+        print("[ChaosMod] Failed to execute command: " .. commandName)
     end
 end
 
@@ -381,18 +381,18 @@ function safeWriteToFile(filePath, content)
     if file then
         file:write(content)
         file:close()
-        print("Successfully wrote to " .. filePath)
+        print("[ChaosMod] Successfully wrote to " .. filePath)
     else
-        print("Failed to open file for writing: " .. filePath)
+        print("[ChaosMod] Failed to open file for writing: " .. filePath)
     end
 end
 
 -- Function to safely remove a file
 function safeRemoveFile(filePath)
     if os.remove(filePath) then
-        print("Successfully removed " .. filePath)
+        print("[ChaosMod] Successfully removed " .. filePath)
     else
-        print("Failed to remove file (may not exist): " .. filePath)
+        print("[ChaosMod] Failed to remove file (may not exist): " .. filePath)
     end
 end
 
@@ -450,7 +450,7 @@ function downloadAndExtractChaosBot(base_path)
     local logPath = base_path .. "download_log.txt"
     
     -- Download the zip file
-    print("Attempting to download ChaosBot")
+    print("[ChaosMod] Attempting to download ChaosBot")
     local downloadCommand = string.format(
         'powershell -command "&{$ProgressPreference = \'SilentlyContinue\'; ' ..
         '$ErrorActionPreference = \'Stop\'; ' ..
@@ -468,20 +468,20 @@ function downloadAndExtractChaosBot(base_path)
     local logFile = io.open(logPath, "r")
     if logFile then
         local logContent = logFile:read("*all")
-        print("Download log:")
+        print("[ChaosMod] Download log:")
         print(logContent)
         logFile:close()
     else
-        print("Failed to read download log")
+        print("[ChaosMod] Failed to read download log")
     end
     
     if not downloadSuccess then
-        print("Failed to download ChaosBot")
+        print("[ChaosMod] Failed to download ChaosBot")
         return false
     end
     
     -- Extract the zip file
-    print("Attempting to extract ChaosBot")
+    print("[ChaosMod] Attempting to extract ChaosBot")
     local extractCommand = string.format(
         'powershell -command "&{$ProgressPreference = \'SilentlyContinue\'; ' ..
         '$ErrorActionPreference = \'Stop\'; ' ..
@@ -499,15 +499,15 @@ function downloadAndExtractChaosBot(base_path)
     logFile = io.open(logPath, "r")
     if logFile then
         local logContent = logFile:read("*all")
-        print("Updated log (including extraction):")
+        print("[ChaosMod] Updated log (including extraction):")
         print(logContent)
         logFile:close()
     else
-        print("Failed to read updated log")
+        print("[ChaosMod] Failed to read updated log")
     end
     
     if not extractSuccess then
-        print("Failed to extract zip file")
+        print("[ChaosMod] Failed to extract zip file")
         os.remove(zipPath)
         return false
     end
@@ -519,13 +519,13 @@ end
 
 function beginDownload(base_path, exePath)
     if downloadAndExtractChaosBot(base_path) then
-        print("Attempting to launch newly downloaded executable")
+        print("[ChaosMod] Attempting to launch newly downloaded executable")
         local success, err, code = os.execute(string.format('start "" "%s"', exePath))
         
         if success then
-            print("Executable opened successfully after download: " .. exePath)
+            print("[ChaosMod] Executable opened successfully after download: " .. exePath)
         else
-            print("Failed to open executable after download: " .. (err or "Unknown error"))
+            print("[ChaosMod] Failed to open executable after download: " .. (err or "Unknown error"))
             local findUI = FindFirstOf("menuChaos_C")
             if findUI:IsValid() then
                 findUI:launchBotFailed()
@@ -536,7 +536,7 @@ function beginDownload(base_path, exePath)
         if findUI:IsValid() then
             findUI:downloadFailed()
         end
-        print("Failed to download and extract ChaosBot")
+        print("[ChaosMod] Failed to download and extract ChaosBot")
     end
 end
 
@@ -544,7 +544,7 @@ function launchChaosBot()
     -- Ensure base_path directory exists
     local createDirCommand = string.format('if not exist "%s" mkdir "%s"', base_path, base_path)
     if not os.execute(createDirCommand) then
-        print("Failed to create directory: " .. base_path)
+        print("[ChaosMod] Failed to create directory: " .. base_path)
         return
     end
 
@@ -561,45 +561,45 @@ function launchChaosBot()
         if versionFile then
             local version = versionFile:read("*all")
             versionFile:close()
-            print("ChaosBot version: " .. version)
+            print("[ChaosMod] ChaosBot version: " .. version)
 
             if version == ChaosBotVersion then
-                print("ChaosBot is up to date")
+                print("[ChaosMod] ChaosBot is up to date")
             else
-                print("ChaosBot is outdated. Updating...")
+                print("[ChaosMod] ChaosBot is outdated. Updating...")
                 beginDownload(base_path, exePath)
                 return
             end
         else
-            print("ChaosBot version file not found. Updating...")
+            print("[ChaosMod] ChaosBot version file not found. Updating...")
             beginDownload(base_path, exePath)
             return
         end
 
         -- Launch executable
-        print("Attempting to launch executable: " .. exePath)
+        print("[ChaosMod] Attempting to launch executable: " .. exePath)
         local success, err, code = os.execute(string.format('start "" "%s"', exePath))
         if success then
-            print("Executable opened successfully: " .. exePath)
+            print("[ChaosMod] Executable opened successfully: " .. exePath)
         else
-            print("Failed to open executable: " .. (err or "Unknown error"))
+            print("[ChaosMod] Failed to open executable: " .. (err or "Unknown error"))
         end
     else
         -- Executable not found, check for Python script
         if io.open(scriptPath, "r") then
-            print("Executable not found. Trying to open with Python")
+            print("[ChaosMod] Executable not found. Trying to open with Python")
             local success, err, code = os.execute(string.format('start "" python "%s"', scriptPath))
             if success then
-                print("Python script opened successfully: " .. scriptPath)
+                print("[ChaosMod] Python script opened successfully: " .. scriptPath)
             else
-                print("Failed to open Python script: " .. (err or "Unknown error"))
-                print("Downloading executable...")
+                print("[ChaosMod] Failed to open Python script: " .. (err or "Unknown error"))
+                print("[ChaosMod] Downloading executable...")
                 beginDownload(base_path, exePath)
             end
         else
             -- Neither executable nor Python script found
-            print("Both executable and Python script not found")
-            print("Downloading executable...")
+            print("[ChaosMod] Both executable and Python script not found")
+            print("[ChaosMod] Downloading executable...")
             beginDownload(base_path, exePath)
         end
     end
@@ -607,48 +607,64 @@ end
 
 -- Read configurations
 local config = {
-    chatShop = readConfig("chatShop.cfg"),
-    emails = readConfig("emails.cfg"),
-    twitch = readConfig("twitch.cfg"),
-    voting = readConfig("voting.cfg")
+    chatShop = readConfig("cfg/chatShop.cfg"),
+    emails = readConfig("cfg/emails.cfg"),
+    twitch = readConfig("cfg/twitch.cfg"),
+    voting = readConfig("cfg/voting.cfg"),
+    hints = readConfig("cfg/hints.cfg"),
+    direct = readConfig("cfg/direct.cfg")
 }
 
 -- Define file paths
 config.files = {
-    enable = base_path .. "enable.txt",
-    emails_enable = base_path .. "emails_enable.txt",
+    enable = base_path .. "listen/enable.txt",
+    emails_enable = base_path .. "listen/emails_enable.txt",
     emails_master = base_path .. "emails_master.json",
+    hints_master = base_path .. "hints_master.json",
     shops_master = base_path .. "shops_master.json",
-    votes = base_path .. "votes.txt",
-    voting_enabled = base_path .. "voting_enabled.txt",
-    shopOpen = base_path .. "shopOpen.txt"
+    direct_master = base_path .. "direct_master.json",
+    votes = base_path .. "listen/votes.txt",
+    voting_enabled = base_path .. "listen/voting_enabled.txt",
+    shopOpen = base_path .. "listen/shopOpen.txt"
 }
 
 -- Wipe master file contents if they exist
 if io.open(config.files.shops_master, "r") then
     safeWriteToFile(config.files.shops_master, "[]")
 else
-    print("shops_master file does not exist")
+    print("[ChaosMod] shops_master file does not exist")
 end
 
 if io.open(config.files.emails_master, "r") then
     safeWriteToFile(config.files.emails_master, "[]")
 else
-    print("emails_master file does not exist")
+    print("[ChaosMod] emails_master file does not exist")
+end
+
+if io.open(config.files.hints_master, "r") then
+    safeWriteToFile(config.files.hints_master, "[]")
+else
+    print("[ChaosMod] hints_master file does not exist")
+end
+
+if io.open(config.files.direct_master, "r") then
+    safeWriteToFile(config.files.direct_master, "[]")
+else
+    print("[ChaosMod] direct_master file does not exist")
 end
 
 -- Wipe votes if the file exists
 if io.open(config.files.votes, "r") then
     safeWriteToFile(config.files.votes, " ")
 else
-    print("votes file does not exist")
+    print("[ChaosMod] votes file does not exist")
 end
 
 -- Close shop if the file exists
 if io.open(config.files.shopOpen, "r") then
     safeWriteToFile(config.files.shopOpen, "false")
 else
-    print("shopOpen file does not exist")
+    print("[ChaosMod] shopOpen file does not exist")
 end
 
 -- Remove enable and result files if they exist
@@ -666,32 +682,6 @@ RegisterConsoleCommandHandler(("Chaos"), function(full, args)
     return true
 end)
 
-
-RegisterConsoleCommandHandler(("PlayerPos"), function()
-    local FirstPlayerController = UEHelpers:GetPlayerController()
-    local Pawn = FirstPlayerController.Pawn
-    local Location = Pawn:K2_GetActorLocation()
-    print(string.format("[MyLuaMod] Player location: {X=%.3f, Y=%.3f, Z=%.3f}\n", Location.X, Location.Y, Location.Z))
-    if lastLocation then
-        print(string.format("[MyLuaMod] Player moved: {delta_X=%.3f, delta_Y=%.3f, delta_Z=%.3f}\n",
-            Location.X - lastLocation.X,
-            Location.Y - lastLocation.Y,
-            Location.Z - lastLocation.Z)
-        )
-    end
-    lastLocation = Location
-    return true
-end)
-
-RegisterConsoleCommandHandler(("PlayerRot"), function()
-    local FirstPlayerController = UEHelpers:GetPlayerController()
-    local Pawn = FirstPlayerController.Pawn
-    local Rotation = Pawn:K2_GetActorRotation()
-    print(string.format("[MyLuaMod] Player rotation: {Pitch=%.3f, Yaw=%.3f, Roll=%.3f}\n", Rotation.Pitch, Rotation.Yaw, Rotation.Roll))
-    return true
-end)
-
-
 -- Function to process new emails
 local function processNewEmails()
     local emails = readMasterFile(config.files.emails_master)
@@ -705,8 +695,12 @@ local function processNewEmails()
                 emailHandler = World:SpawnActor(emailHandler_C, {}, {})
             end
             if emailHandler and emailHandler:IsValid() then
-                local fullBody = email.body .. " - " .. email.username
-                emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                if email.user == "user" then
+                    local fullBody = email.body .. " - " .. email.twitch_user
+                    emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
+                else
+                    emailHandler:addSpecificUserEmail(email.user, FText(email.subject), FText(email.body))
+                end
             end
             email.processed = true
             processed[#processed + 1] = i
@@ -730,7 +724,11 @@ local function processNewShopOrders()
                 shopHandler = World:SpawnActor(shopHandler_C, {}, {})
             end
             if shopHandler and shopHandler:IsValid() then
-                shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
+                if config.direct.enabled then
+                    shopHandler:placeOrder(FName(order.item), order.amount)
+                else
+                  shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
+                end
             end
             order.processed = true
             processed[#processed + 1] = i
@@ -738,6 +736,59 @@ local function processNewShopOrders()
     end
     if #processed > 0 then
         writeMasterFile(config.files.shops_master, orders)
+    end
+end
+
+local function processNewHints()
+    local hints = readMasterFile(config.files.hints_master)
+    local processed = {}
+    for i, hint in ipairs(hints) do
+        if not hint.processed then
+            local hintsHandler_C = FindFirstOf("hintsHandler_C")
+            if not hintsHandler_C:IsValid() then
+                local World = UEHelpers:GetWorld()
+                local hintsHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/hintsHandler.hintsHandler_C")
+                hintsHandler_C = World:SpawnActor(hintsHandler_C, {}, {})
+            end
+            if hintsHandler_C and hintsHandler_C:IsValid() then
+                hintsHandler_C:submitHint(hint.type, FText(hint.hint))
+            else 
+                print("[ChaosMod] Failed to find hintsHandler_C")
+            end
+            hint.processed = true
+            print("[ChaosMod] Processed hint: " .. hint.hint)
+            processed[#processed + 1] = i
+        end
+    end
+    if #processed > 0 then
+        writeMasterFile(config.files.hints_master, hints)
+    end
+end
+
+local function processNewDirects()
+    local directs = readMasterFile(config.files.direct_master)
+    local processed = {}
+    for i, direct in ipairs(directs) do
+        if not direct.processed then
+            local directHandler_C = FindFirstOf("directHandler_C")
+            if not directHandler_C:IsValid() then
+                local World = UEHelpers:GetWorld()
+                local directHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/directHandler.directHandler_C")
+                directHandler_C = World:SpawnActor(directHandler_C, {}, {})
+            end
+            if directHandler_C and directHandler_C:IsValid() then
+                if direct.type == "trigger_chaos" then
+                    directHandler_C:runDirectCommand(direct.command)
+                elseif direct.type == "trigger_event" then
+                    directHandler_C:runDirectEvent(direct.command)
+                end
+            end
+            direct.processed = true
+            processed[#processed + 1] = i
+        end
+    end
+    if #processed > 0 then
+        writeMasterFile(config.files.direct_master, directs)
     end
 end
 
@@ -762,7 +813,7 @@ local function toggleChaosMod()
             local file = io.open(config.files.enable, "w")
             file:write("true")
             file:close()
-            print("ChaosMod enabled")
+            print("[ChaosMod] ChaosMod enabled")
         else
             if findConstructor:IsValid() then
                 findConstructor:K2_DestroyActor()
@@ -772,7 +823,7 @@ local function toggleChaosMod()
                 findWindow:disableMenu()
             end
             os.remove(config.files.enable)
-            print("ChaosMod disabled")
+            print("[ChaosMod] ChaosMod disabled")
         end
     end)
 end
@@ -790,7 +841,7 @@ local function disableChaosMod()
         end
     end)
     os.remove(config.files.enable)
-    print("ChaosMod disabled")
+    print("[ChaosMod] ChaosMod disabled")
 end
 
 -- Manually trigger voting
@@ -812,40 +863,6 @@ local function clearEvents()
         ExecuteInGameThread(function()
             mainGamemode_C.eventsActive:Empty()
         end)
-        Hint("You can now pause/save")
-    end
-end
-
--- Toggle emails
-local function toggleEmails()
-    emailsEnabled = not emailsEnabled
-    
-    local findWindow = FindFirstOf("votingMenu_C")
-    if findWindow:IsValid() then
-        ExecuteInGameThread(function()
-            findWindow:toggleEmails()
-        end)
-    end
-
-
-    if emailsEnabled then
-        local file = io.open(config.files.emails_enable, "w")
-        file:write("true")
-        file:close()
-        LoopAsync(1000, function()
-            if not emailsEnabled then
-                return true
-            end
-            processNewEmails()
-        end)
-    else
-        os.remove(config.files.emails_enable)
-        local emailHandler = FindFirstOf("emailHandler_C")
-        if emailHandler:IsValid() then
-            ExecuteInGameThread(function() 
-                emailHandler:K2_DestroyActor()
-            end)
-        end
     end
 end
 
@@ -857,11 +874,6 @@ end)
 
 RegisterConsoleCommandHandler(("clearEvents"), function(full, args)
     clearEvents()
-    return true
-end)
-
-RegisterConsoleCommandHandler(("toggleEmails"), function(full, args)
-    toggleEmails()
     return true
 end)
 
@@ -890,9 +902,16 @@ end
 
 -- Main loop using loopasync
 LoopAsync(math.floor(1000 / 30), function()
-    if config.chatShop.enabled then
-        processNewShopOrders()
-    end
+    processNewDirects()
+    processNewEmails()
+    processNewHints()
+    processNewShopOrders()
+    processNewShopOrders()
+end)
+
+LoopAsync(5000, function()
+    config.direct = readConfig("cfg/direct.cfg")
+    config.twitch = readConfig("cfg/twitch.cfg")
 end)
 
 LoopAsync(2500, function()

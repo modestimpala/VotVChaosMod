@@ -8,7 +8,6 @@ return {
             Pawn.hulkMode = true
             ExecuteWithDelay(180000, function()
                 Pawn.hulkMode = false
-                Hint("Hulk mode has ended")
             end)
         else 
             print("Pawn is not valid")

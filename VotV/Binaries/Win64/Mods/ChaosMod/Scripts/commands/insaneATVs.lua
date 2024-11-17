@@ -16,7 +16,6 @@ return {
                 car.speed_turbo = 4000
                 car.torqAlpha = 0
             end
-            Hint("ATVs have been restored to normal")
         end)
         return true
     end
