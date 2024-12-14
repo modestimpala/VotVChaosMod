@@ -166,17 +166,47 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         
         await self.email_system.process_email(ctx.author.name, email_message.subject, email_message.body, ctx, email_message.user)
 
-    async def hint(self, ctx: commands.Context, hint_type: str, *, hint_text: str):
+    @commands.command()
+    async def hint(self, ctx: commands.Context, hint_text: str):
         """Command to send hints."""
         if self.config.get('hints', {}).get('channel_points', False):
             await ctx.reply("Please use channel points to send hints.")
             return
-        await self.hint_system.process_hint(hint_type, hint_text, ctx)
+        await self.hint_system.process_hint(hint_text, None, ctx)
 
 
     def is_connected_to_twitch(self):
         """Check if the bot is connected to Twitch."""
         return self.is_connected
+    
+    async def update_config(self, new_config):
+        """Update the config for the bot and handle any necessary cleanup or initialization."""
+        old_channel_points_enabled = self.config.get('twitch', {}).get('channel_points', False)
+        new_channel_points_enabled = new_config.get('twitch', {}).get('channel_points', False)
+
+        # Update the config after handling all changes
+        self.config = new_config
+
+        # Handle channel points changes
+        if old_channel_points_enabled and not new_channel_points_enabled:
+            # Disabling channel points
+            self.logger.info("Channel points being disabled - cleaning up rewards...")
+            try:
+                await self.remove_all_rewards()
+                self.logger.info("Channel points cleanup completed successfully")
+            except Exception as e:
+                self.logger.error(f"Error cleaning up channel points: {e}")
+        elif not old_channel_points_enabled and new_channel_points_enabled and self.is_connected:
+            # Enabling channel points
+            self.logger.info("Channel points being enabled - initializing rewards...")
+            try:
+                await self.initialize_channel_points()
+                await self.initialize_pubsub()
+                self.logger.info("Channel points initialization completed successfully")
+            except Exception as e:
+                self.logger.error(f"Error initializing channel points: {e}")
+        
+        
     
     async def close(self):
         """Clean up and close connections."""
@@ -186,6 +216,11 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         if self.config.get('twitch', {}).get('channel_points', False):
             await self.remove_all_rewards()
 
+        # Close websocket connection
+        if hasattr(self, '_ws') and self._ws:
+            await self._ws.close()
+            self._ws = None
+
         while not self.message_queue.empty():
             try:
                 await asyncio.wait_for(self.message_queue.get(), timeout=0.1)
@@ -193,9 +228,12 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
                 break
 
         try:
+            await self._websocket.close() if hasattr(self, '_websocket') else None
             await super().close()
         except Exception as e:
             self.logger.exception(f"Error closing Twitch connection: {e}")
+        
+        self.is_connected = False
         self.logger.info("Twitch Connection closed.")
 
 

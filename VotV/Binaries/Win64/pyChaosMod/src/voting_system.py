@@ -71,6 +71,8 @@ class VotingSystem:
             self.votes[vote] = self.votes.get(vote, 0) + 1
             self.voters.add(username)
            
+    def update_config(self, config):
+        self.config = config
 
     def update(self):
         try:

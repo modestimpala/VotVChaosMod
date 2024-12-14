@@ -6,6 +6,7 @@ import asyncio
 
 class ShopSystem:
     def __init__(self, config):
+        self.logger = logging.getLogger(__name__)
         self.config = config
         self.user_shop_cooldowns = {}
         self.master_file = config['files']['shops_master']
@@ -15,7 +16,7 @@ class ShopSystem:
         self.direct_connection = None
         self.shop_options = self.get_shop_options()
 
-        self.logger = logging.getLogger(__name__)
+        
 
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
@@ -37,7 +38,7 @@ class ShopSystem:
                     remaining_cooldown = int(self.config['chatShop']['usercooldown'] - time_since_last_use)
                     await self.twitch_connection.reply(ctx, f"You're on cooldown. You can use the shop again in {remaining_cooldown} seconds.")
                     return
-            if item not in self.shop_options:
+            if item not in self.shop_options and self.shop_options is not []:
                 await self.twitch_connection.reply(ctx, f"Invalid item. Please choose from the following: https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt")
                 return
 
@@ -91,8 +92,19 @@ class ShopSystem:
 
     def is_in_shop_options(self, item):
         return item in self.shop_options
+    
+    def update_config(self, config):
+        self.config = config
+        self.shop_options = self.get_shop_options()
 
     def get_shop_options(self):
         file = "list_store.txt"
-        with open(file, "r") as f:
-            return f.read().splitlines()
+        if os.path.exists(file):
+            with open(file, "r") as f:
+                return f.read().splitlines()
+        else:
+            if os.path.exists(os.path.join("pyChaosMod", file)):
+                with open(os.path.join("pyChaosMod", file), "r") as f:
+                    return f.read().splitlines()
+        self.logger.warning("Could not find shop options file. Shop checking will be disabled.")
+        return []
