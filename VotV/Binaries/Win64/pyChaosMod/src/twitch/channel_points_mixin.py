@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from datetime import datetime
+import traceback
 from typing import Dict, Optional
 from twitchio import CustomReward, CustomRewardRedemption
 import aiohttp
@@ -36,6 +37,7 @@ class ChannelPointsMixin:
     async def check_leftover_rewards(self):
         """Check for and handle any leftover rewards from previous sessions."""
         if not os.path.exists(self.rewards_file):
+            self.logger.debug("No rewards file found")
             return
 
         try:
@@ -77,6 +79,8 @@ class ChannelPointsMixin:
                             self.rewards = {}
                 else:
                     self.logger.info("Skipping reward cleanup.")
+            else:
+                self.logger.debug("No leftover rewards found")
         except Exception as e:
             self.logger.error(f"Error checking leftover rewards: {e}")
 
@@ -249,53 +253,101 @@ class ChannelPointsMixin:
                     self.logger.exception("Detailed traceback:")
 
     async def create_custom_reward(self, command):
-        """Create a single custom reward."""
+        """
+        Create a single custom reward or add existing one if duplicate.
+        
+        Args:
+            command (dict): Dictionary containing reward configuration
+            
+        Returns:
+            bool: True if reward creation/retrieval was successful, False otherwise
+        """
         if not self.broadcaster:
             self.logger.error("Broadcaster not set. Cannot create custom reward.")
-            return
+            return False
         
-        if command['pointCost'] < 1:
-            self.logger.error(f"Invalid point cost for command {command['title']} - must be at least 1")
-            return
+        # Validate point cost
+        try:
+            point_cost = int(command['pointCost'])
+            if point_cost < 1:
+                self.logger.error(f"Invalid point cost for command '{command['title']}' - must be at least 1")
+                return False
+        except (ValueError, KeyError):
+            self.logger.error(f"Invalid point cost format for command '{command['title']}'")
+            return False
 
         try:
             self.logger.debug(f"Attempting to create reward with data: {command}")
             
+            # Verify OAuth scopes
             scopes = await self.get_scopes()
             if 'channel:manage:redemptions' not in scopes:
-                self.logger.error("OAuth token is missing the 'channel:manage:redemptions' scope.")
-                return
-
-            # Check if reward already exists
-            existing_reward = None
+                self.logger.error("Missing required OAuth scope: 'channel:manage:redemptions'")
+                return False
+            
+            # Check for existing reward in our list
             for cmd_id, reward in self.rewards.items():
                 if cmd_id == command['id']:
-                    existing_reward = reward
-                    break
-
-            if existing_reward:
-                self.logger.debug(f"Reward {command['title']} already exists")
-                return
+                    self.logger.debug(f"Reward '{command['title']}' already exists with ID: {cmd_id}")
+                    return True
             
-            reward = await self.broadcaster.create_custom_reward(
-                token=self.config['twitch']['oauth_token'],
-                title=command['title'],
-                cost=int(command['pointCost']),
-                prompt=command['description'],
-                global_cooldown=int(command['pointsCooldown']),
-                input_required=False,  # Regular commands don't require input by default
-                redemptions_skip_queue=False
-            )
-            
-            self.rewards[command['id']] = reward
-            self.logger.debug(f"Created custom reward: {command['title']}")
-            
-            # Save rewards after each creation
-            self.save_rewards()
-            
+            try:
+                reward = await self.broadcaster.create_custom_reward(
+                    token=self.config['twitch']['oauth_token'],
+                    title=command['title'],
+                    cost=point_cost,
+                    prompt=command['description'],
+                    global_cooldown=int(command['pointsCooldown']),
+                    input_required=False,
+                    redemptions_skip_queue=False
+                )
+                
+                self.rewards[command['id']] = reward
+                self.logger.info(f"Successfully created custom reward: '{command['title']}'")
+                self.save_rewards()
+                return True
+                
+            except IndexError as e:
+                # This catches the specific TwitchIO library bug where it tries to access error.args[2]
+                # Check if this was actually a duplicate reward error by looking at the traceback
+                tb_str = traceback.format_exc()
+                if 'CREATE_CUSTOM_REWARD_DUPLICATE_REWARD' in tb_str:
+                    # Fetch existing rewards and find the matching one
+                    existing_rewards = await self.broadcaster.get_custom_rewards(token=self.config['twitch']['oauth_token'])
+                    for existing_reward in existing_rewards:
+                        if existing_reward.title == command['title']:
+                            self.rewards[command['id']] = existing_reward
+                            self.logger.info(f"Added existing reward '{command['title']}' to rewards list")
+                            self.save_rewards()
+                            return True
+                    self.logger.error(f"Could not find existing reward '{command['title']}' despite duplicate error")
+                    return False
+                else:
+                    self.logger.error(f"Unexpected IndexError while creating reward '{command['title']}': {str(e)}")
+                    self.logger.debug(f"Full traceback: {tb_str}")
+                    return False
+                    
+            except Exception as e:
+                if 'CREATE_CUSTOM_REWARD_DUPLICATE_REWARD' in str(e):
+                    # Fetch existing rewards and find the matching one
+                    existing_rewards = await self.broadcaster.get_custom_rewards(token=self.config['twitch']['oauth_token'])
+                    for existing_reward in existing_rewards:
+                        if existing_reward.title == command['title']:
+                            self.rewards[command['id']] = existing_reward
+                            self.logger.info(f"Added existing reward '{command['title']}' to rewards list")
+                            self.save_rewards()
+                            return True
+                    self.logger.error(f"Could not find existing reward '{command['title']}' despite duplicate error")
+                    return False
+                else:
+                    self.logger.error(f"Error creating reward '{command['title']}': {str(e)}")
+                    self.logger.debug(f"Full traceback: {traceback.format_exc()}")
+                    return False
+                    
         except Exception as e:
-            self.logger.error(f"Failed to create custom reward for {command['title']}: {e}")
-            self.logger.exception("Detailed traceback:")
+            self.logger.error(f"Unexpected error in create_custom_reward for '{command['title']}': {str(e)}")
+            self.logger.debug(f"Full traceback: {traceback.format_exc()}")
+            return False
 
     async def get_scopes(self):
         """Validate OAuth token and get its scopes."""
