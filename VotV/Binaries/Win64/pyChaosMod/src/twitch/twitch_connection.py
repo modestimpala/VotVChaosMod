@@ -153,12 +153,16 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         # Remove the command name from the message
         content = ctx.message.content.split(maxsplit=1)[1] if len(ctx.message.content.split()) > 1 else ""
 
+         # Handle simple format e.g. "!email hello"
+        if content and not any(marker in content.lower() for marker in ['subject:', 'body:', 'user:']):
+            content = f"subject:{ctx.author.name} body:{content}"
+        
         # Parse the email message
         email_processor = EmailCommandProcessor()
         email_message = email_processor.parse_email_string(content)
         
         if not email_message:
-            await ctx.reply("To send emails, use the format: !email subject:<email subject> body:<email body> [user:<username>]")
+            await ctx.reply("To send emails, use either:\n1. Simple format: !email your message\n2. Detailed format: !email subject:<email subject> body:<email body> user:<username>")
             return
         
         if not email_message.user:
