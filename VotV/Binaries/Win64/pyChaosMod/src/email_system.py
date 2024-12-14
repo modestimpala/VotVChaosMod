@@ -97,6 +97,11 @@ class EmailSystem:
 
     def are_emails_enabled(self):
         return self.emails_enabled
+    
+    def update_config(self, config):
+        self.config = config
+        self.email_cooldown_time = config['emails']['user_cooldown']
+        self.emails_enabled = config['emails']['enabled']
 
     def update(self):
         if self.twitch_connection is not None:

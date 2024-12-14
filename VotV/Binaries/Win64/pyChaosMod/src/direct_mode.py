@@ -139,6 +139,10 @@ class DirectModeHandler:
             except Exception as e:
                 logger.error(f"Error sending panel image: {e}")
                 await asyncio.sleep(6)
+        
+    async def update_config(self, new_config):
+        """Updates the configuration settings."""
+        self.config = new_config
 
     async def close(self):
         """Closes the WebSocket connection."""
