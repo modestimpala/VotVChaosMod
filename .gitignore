@@ -27,3 +27,8 @@ VotV/Binaries/Win64/pyChaosMod/ChaosBot.exe
 VotV/Binaries/Win64/pyChaosMod/updater.log
 VotV/Binaries/Win64/pyChaosMod/src/dataclass/__pycache__/*.pyc
 VotV/Binaries/Win64/pyChaosMod/src/utils/__pycache__/*.pyc
+VotV/Binaries/Win64/pyChaosMod/download_log.txt
+VotV/Binaries/Win64/pyChaosMod/ChaosBot_Updater.exe
+VotV/Binaries/Win64/pyChaosMod/myvenv/*
+/.idea/*
+.vscode/launch.json
