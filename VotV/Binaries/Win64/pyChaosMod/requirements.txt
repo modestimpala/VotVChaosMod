@@ -1,0 +1,8 @@
+aiohttp==3.10.10
+psutil==6.0.0
+psutil==6.1.0
+Requests==2.32.3
+textual==0.86.3
+twitchio==2.10.0
+watchdog==6.0.0
+websockets==13.1

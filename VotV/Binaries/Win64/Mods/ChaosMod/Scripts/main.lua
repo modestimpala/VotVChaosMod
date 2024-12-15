@@ -550,30 +550,16 @@ function launchChaosBot()
 
     local exePath = base_path .. "ChaosBot.exe"
     local scriptPath = base_path .. "ChaosBot.py"
-    local versionPath = base_path .. "ChaosBot_version.txt"
+    local updaterFile = base_path .. "ChaosBot_Updater.exe"
 
     -- Check if executable exists
     local exeFile = io.open(exePath, "r")
     if exeFile then
         exeFile:close() 
-        -- Check version
-        local versionFile = io.open(versionPath, "r")
-        if versionFile then
-            local version = versionFile:read("*all")
-            versionFile:close()
-            print("[ChaosMod] ChaosBot version: " .. version)
-
-            if version == ChaosBotVersion then
-                print("[ChaosMod] ChaosBot is up to date")
-            else
-                print("[ChaosMod] ChaosBot is outdated. Updating...")
-                beginDownload(base_path, exePath)
-                return
-            end
-        else
-            print("[ChaosMod] ChaosBot version file not found. Updating...")
+        -- Check if updater exists
+        if not io.open(updaterFile, "r") then
+            print("[ChaosMod] Updater not found. Downloading executable...")
             beginDownload(base_path, exePath)
-            return
         end
 
         -- Launch executable

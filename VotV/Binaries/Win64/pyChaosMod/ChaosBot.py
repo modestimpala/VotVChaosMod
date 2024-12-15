@@ -1,128 +1,214 @@
-import os
 import signal
 import sys
-import psutil
 from src.hint_system import HintSystem
 from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
-from src.utils.config import load_config
+from src.utils.config import create_config_manager
 import asyncio
 import traceback
 import logging
-from logging.handlers import RotatingFileHandler
 from src.direct_mode import DirectModeHandler  
 from src.task_manager import TaskManager
-import requests
-import subprocess
-
-VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/3.0.0/chaosbot_version.txt"
-DOWNLOAD_URL = "https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip"
-
-def check_for_updates(current_version):
-    try:
-        response = requests.get(VERSION_URL)
-        latest_version = response.text.strip()
-        return latest_version > current_version
-    except Exception as e:
-        logger.error(f"Failed to check for updates: {e}")
-        return False
-    
-
-def check_for_updates(current_version):
-    try:
-        response = requests.get(VERSION_URL)
-        latest_version = response.text.strip()
-        return latest_version > current_version
-    except Exception as e:
-        logger.error(f"Failed to check for updates: {e}")
-        return False
-
-def start_update_process():
-    try:
-        updater_path = os.path.join(os.path.dirname(sys.executable), "ChaosBot_Updater.exe")
-        if os.path.exists(updater_path):
-            subprocess.Popen([updater_path, sys.executable])
-            logger.info("Update process started. Exiting current instance.")
-            sys.exit(0)
-        else:
-            logger.error("Updater executable not found.")
-    except Exception as e:
-        logger.error(f"Failed to start update process: {e}")
-
-def setup_logging():
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-
-    # Set specific level for twitchio.websocket
-    twitchio_logger = logging.getLogger('twitchio.websocket')
-    twitchio_logger.setLevel(logging.ERROR)  # Change to ERROR to reduce websocket noise
-
-    # Create logs directory if it doesn't exist
-    log_dir = 'logs'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-    # Create file handler which logs even debug messages
-    file_handler = RotatingFileHandler(
-        filename=os.path.join(log_dir, 'chaosbot.log'),
-        maxBytes=5*1024*1024,  # 5MB
-        backupCount=5,
-        encoding='utf-8'  # Specify UTF-8 encoding
-    )
-    file_handler.setLevel(logging.DEBUG)
-
-    # Create console handler with a higher log level
-    class UnicodeStreamHandler(logging.StreamHandler):
-        def emit(self, record):
-            try:
-                msg = self.format(record)
-                stream = self.stream
-                # Replace problematic characters with their Unicode escape sequences
-                msg = msg.encode('unicode_escape').decode('ascii')
-                stream.write(msg + self.terminator)
-                self.flush()
-            except Exception:
-                self.handleError(record)
-
-    console_handler = UnicodeStreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    # Create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    # Add the handlers to the logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+from src.utils.logging import setup_logging
+from src.utils.updating import check_for_updates, start_update_process
+from src.utils.process import is_already_running
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def is_already_running():
-    current_process = psutil.Process()
-    current_pid = current_process.pid
-    current_create_time = current_process.create_time()
-    time_tolerance = 2  # 2 seconds of wiggle room
+class ConnectionManager:
+    def __init__(self):
+        self.twitch_connection = None 
+        self.direct_connection = None
+        self.tasks = []
+        self.task_manager = None
+        self.voting_system = None
+        self.email_system = None
+        self.shop_system = None
+        self.hint_system = None
 
-    for process in psutil.process_iter(['name', 'pid', 'create_time', 'cmdline']):
-        if process.pid == current_pid:
-            continue
+    async def start_connections(self, config, task_manager, voting_system, email_system, shop_system, hint_system):
+        self.task_manager = task_manager
+        self.voting_system = voting_system
+        self.email_system = email_system
+        self.shop_system = shop_system
+        self.hint_system = hint_system
+
         try:
-            if process.name().lower() == "chaosbot.exe":
-                if current_create_time - process.create_time() > time_tolerance:
-                    return True
-            if process.name().lower() in ["python.exe", "python"]:
-                cmdline = process.cmdline()
-                if len(cmdline) > 1 and "chaosbot.py" in cmdline[1].lower():
-                    if current_create_time - process.create_time() > time_tolerance:
-                        return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
-    return False
+            if config['twitch']['enabled']:
+                await self.start_twitch(config)
+        except KeyError as e:
+            logger.error(f'Incorrect config entry in twitch.cfg: {e}')
+            logger.debug(traceback.format_exc())
+
+        try:
+            if config['direct']['enabled']:
+                await self.start_direct(config)
+        except KeyError as e:
+            logger.error(f'Incorrect config entry in direct.cfg: {e}')
+            logger.debug(traceback.format_exc())
+
+    async def start_twitch(self, config):
+        self.twitch_connection = TwitchConnection(
+            config, self.voting_system, self.email_system, 
+            self.shop_system, self.hint_system
+        )
+        self.tasks.append(
+            asyncio.create_task(
+                self.task_manager.start_task(
+                    "twitch_mode",
+                    self.twitch_connection.start
+                )
+            )
+        )
+
+    async def start_direct(self, config):
+        self.direct_connection = DirectModeHandler(
+            config, self.email_system, self.shop_system, self.hint_system
+        )
+        self.tasks.append(
+            asyncio.create_task(
+                self.task_manager.start_task(
+                    "direct_mode",
+                    self.direct_connection.start
+                )
+            )
+        )
+
+    async def update_config(self, new_config):
+        old_twitch_enabled = self.twitch_connection is not None
+        old_direct_enabled = self.direct_connection is not None
+        new_twitch_enabled = new_config['twitch']['enabled']
+        new_direct_enabled = new_config['direct']['enabled']
+
+        # Handle Twitch connection changes
+        if old_twitch_enabled != new_twitch_enabled:
+            if new_twitch_enabled:
+                await self.start_twitch(new_config)
+            else:
+                await self.task_manager.stop_task("twitch_mode")
+                if self.twitch_connection:
+                    await self.twitch_connection.close()
+                    self.twitch_connection = None
+
+        # Handle Direct connection changes
+        if old_direct_enabled != new_direct_enabled:
+            if new_direct_enabled:
+                await self.start_direct(new_config)
+            else:
+                await self.task_manager.stop_task("direct_mode")
+                if self.direct_connection:
+                    await self.direct_connection.close()
+                    self.direct_connection = None
+
+        # Update existing connections
+        if self.direct_connection and new_direct_enabled:
+            await self.direct_connection.update_config(new_config)
+        if self.twitch_connection and new_twitch_enabled:
+            await self.twitch_connection.update_config(new_config)
+
+async def main():
+    try:
+        logger = setup_logging()
+        logger.info("Starting ChaosBot")
+        
+        # Create and start config manager
+        config_manager = await create_config_manager()
+        config = config_manager.config
+        
+        # Check for updates if enabled
+        if config["misc"]["auto_bot_update"]:
+            logger.info("Checking for updates...")
+            if getattr(sys, 'frozen', False):
+                current_version = config.get('version', '0.0.0')
+                logger.info(f"Current version: {current_version}")
+                if check_for_updates(current_version):
+                    logger.info("New version available. Starting update process...")
+                    start_update_process()
+                else:
+                    logger.info("No updates available.")
+            else:
+                logger.warning("ChaosBot is running in development mode. Automatic updates are disabled.")
+        else:
+            logger.info("Automatic updates are disabled. Skipping update check.")
+    
+        logger.info("Establishing subsystems")
+        
+        # Initialize systems
+        email_system = EmailSystem(config)
+        shop_system = ShopSystem(config)
+        hint_system = HintSystem(config)
+        voting_system = VotingSystem(config)
+        connection_manager = ConnectionManager()
+
+        # Register systems for config updates
+        def update_systems(new_config):
+            email_system.update_config(new_config)
+            shop_system.update_config(new_config)
+            hint_system.update_config(new_config)
+            voting_system.update_config(new_config)
+            asyncio.create_task(connection_manager.update_config(new_config))
+        
+        config_manager.register_change_callback(update_systems)
+
+        logger.info("Starting Connection")
+
+        task_manager = TaskManager()
+        shutdown_event = asyncio.Event()
+        
+        def signal_handler(sig, frame):
+            logger.info(f"Received signal {sig}")
+            shutdown_event.set()
+
+        # Set up signal handlers
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, signal_handler)
+
+        try:
+            # Start connections
+            await connection_manager.start_connections(
+                config, task_manager, voting_system, email_system, shop_system, hint_system
+            )
+
+            # Wait for shutdown signal
+            await shutdown_event.wait()
+            
+        except Exception as e:
+            logger.error(f"An error occurred in main loop: {e}")
+            logger.error("Full traceback:")
+            traceback.print_exc()
+        finally:
+            logger.info("Shutting down task manager...")
+            await task_manager.stop_all()
+            logger.info("ChaosBot shutdown complete")
+    except Exception as e:
+        logger.error(f"An error occurred in main: {e}")
+        logger.error("Full traceback:")
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    if is_already_running():
+        print("Warning: Another instance of ChaosBot is already running.")
+        print("Running multiple instances may cause unexpected behavior.")
+        print("Press Enter to continue anyway, or close this window to exit...")
+        input()
+        print("Continuing with multiple instances...")
+    
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass  # This is handled by the signal handler now
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        logger.error("Full traceback:")
+        traceback.print_exc()
+        input() # Wait for user input before closing
+    finally:
+        logger.info("ChaosBot has exited.")
+        sys.exit(0)  # Exit with a zero status code for normal exit
 
 async def shutdown(tasks, signal_received=None):
     if signal_received:
@@ -149,104 +235,3 @@ async def shutdown(tasks, signal_received=None):
         logger.error(f"Error during shutdown: {str(e)}")
     finally:
         logger.info("ChaosBot has been shut down.")
-
-async def main():
-    logger.info("Starting ChaosBot")
-    logger.info("Loading config")
-    config = load_config()
-
-    if getattr(sys, 'frozen', False):
-        current_version = config.get('version', '0.0.0')
-        logger.info(f"Current version: {current_version}")
-        if check_for_updates(current_version):
-            logger.info("New version available. Starting update process...")
-            start_update_process()
-        else:
-            logger.info("No updates available.")
-    else:
-        logger.warning("ChaosBot is running in development mode. Automatic updates are disabled.")
-   
-    logger.info("Establishing subsystems")
-    
-    email_system = EmailSystem(config)
-    shop_system = ShopSystem(config)
-    hint_system = HintSystem(config)
-
-    voting_system = VotingSystem(config)
-
-    logger.info("Starting Connection")
-
-    task_manager = TaskManager()
-    shutdown_event = asyncio.Event()
-    
-    def signal_handler(sig, frame):
-        logger.info(f"Received signal {sig}")
-        shutdown_event.set()
-
-    # Set up signal handlers
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, signal_handler)
-
-    try:
-        tasks = []
-
-        # Start Twitch connection if enabled
-        if config['twitch']['enabled']:
-            twitch_connection = TwitchConnection(
-                config, voting_system, email_system, shop_system, hint_system
-            )
-            tasks.append(
-                asyncio.create_task(
-                    task_manager.start_task(
-                        "twitch_mode",
-                        twitch_connection.start
-                    )
-                )
-            )
-
-        # Start Direct Mode if enabled
-        if config['direct']['enabled']:
-            direct_connection = DirectModeHandler(
-                config, email_system, shop_system, hint_system
-            )
-            tasks.append(
-                asyncio.create_task(
-                    task_manager.start_task(
-                        "direct_mode",
-                        direct_connection.start
-                    )
-                )
-            )
-
-        # Wait for shutdown signal
-        await shutdown_event.wait()
-        
-    except Exception as e:
-        logger.error(f"An error occurred in main loop: {e}")
-        logger.error("Full traceback:")
-        traceback.print_exc()
-    finally:
-        logger.info("Shutting down task manager...")
-        await task_manager.stop_all()
-        logger.info("ChaosBot shutdown complete")
-
-if __name__ == "__main__":
-    if is_already_running():
-        print("Warning: Another instance of ChaosBot is already running.")
-        print("Running multiple instances may cause unexpected behavior.")
-        print("Press Enter to continue anyway, or close this window to exit...")
-        input()
-        print("Continuing with multiple instances...")
-    
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass  # This is handled by the signal handler now
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
-        logger.error("Full traceback:")
-        traceback.print_exc()
-        input() # Wait for user input before closing
-    finally:
-        logger.info("ChaosBot has exited.")
-        sys.exit(0)  # Exit with a zero status code for normal exit

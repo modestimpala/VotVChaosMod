@@ -100,6 +100,9 @@ class HintSystem:
             with open(self.master_file, 'r') as f:
                 return json.load(f)
         return []
+    
+    def update_config(self, config):
+        self.config = config
         
     def write_master_file(self, data):
         with open(self.master_file, 'w') as f:

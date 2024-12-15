@@ -40,7 +40,7 @@ class DirectModeHandler:
                 server_url, 
                 ssl=ssl_context
             )
-            logger.info(f"Connected to WebSocket server at {server_url}")
+            logger.info(f"Connected to Panel Server")
             
             # Request a new session with panel username
             await self.websocket.send(json.dumps({
@@ -139,6 +139,10 @@ class DirectModeHandler:
             except Exception as e:
                 logger.error(f"Error sending panel image: {e}")
                 await asyncio.sleep(6)
+        
+    async def update_config(self, new_config):
+        """Updates the configuration settings."""
+        self.config = new_config
 
     async def close(self):
         """Closes the WebSocket connection."""
