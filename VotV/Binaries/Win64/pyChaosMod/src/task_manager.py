@@ -38,6 +38,26 @@ class TaskManager:
                 if name in self.tasks:
                     del self.tasks[name]
 
+    async def stop_task(self, name: str):
+        """Stop a specific task gracefully."""
+        if name not in self.tasks:
+            logger.debug(f"Task {name} not found - may have already been stopped")
+            return
+
+        task = self.tasks[name]
+        if not task.done():
+            logger.info(f"Cancelling task: {name}")
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                logger.info(f"Task {name} cancelled successfully")
+            except Exception as e:
+                logger.error(f"Error while stopping task {name}: {e}")
+        
+        self.tasks.pop(name, None)  # Safely remove task
+        self.reset_delay(name)
+
     def get_next_delay(self, name: str) -> float:
         """Calculate the next retry delay with exponential backoff."""
         current_delay = self.restart_delays.get(name, self.base_delay)
