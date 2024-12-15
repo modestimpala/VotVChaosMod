@@ -40,7 +40,7 @@ class DirectModeHandler:
                 server_url, 
                 ssl=ssl_context
             )
-            logger.info(f"Connected to WebSocket server at {server_url}")
+            logger.info(f"Connected to Panel Server")
             
             # Request a new session with panel username
             await self.websocket.send(json.dumps({

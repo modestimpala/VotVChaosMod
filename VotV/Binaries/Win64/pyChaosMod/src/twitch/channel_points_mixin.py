@@ -170,7 +170,7 @@ class ChannelPointsMixin:
         commands = self.load_commands()
         enabled_commands_count = sum(1 for cmd in commands if cmd['isEnabledForPoints'])
         if enabled_commands_count > 0:
-            self.logger.info(f"Creating {enabled_commands_count} channel point rewards...")
+            self.logger.info(f"Creating {enabled_commands_count} custom channel point rewards...")
 
         for cmd in commands:
             if cmd['isEnabledForPoints']:
@@ -205,7 +205,7 @@ class ChannelPointsMixin:
             if self.config.get(system['system'], {}).get('channel_points', False) and self.config.get(system['system'], {}).get('enabled', False)
         )
         if enabled_systems_count > 0:
-            self.logger.info(f"Creating special system rewards...")
+            self.logger.info(f"Creating special system rewards (email, chat shop, etc)...")
 
         for system in special_systems:
             if system['cost'] < 1:
@@ -282,7 +282,7 @@ class ChannelPointsMixin:
             # Verify OAuth scopes
             scopes = await self.get_scopes()
             if 'channel:manage:redemptions' not in scopes:
-                self.logger.error("Missing required OAuth scope: 'channel:manage:redemptions'")
+                self.logger.error("Missing required OAuth scope: 'channel:manage:redemptions' - get a proper token from https://twitchtokengenerator.com/quick/76EdtsccRT")
                 return False
             
             # Check for existing reward in our list
@@ -402,8 +402,13 @@ class ChannelPointsMixin:
                 self.logger.error(f"Failed to refund redemption after error: {refund_error}")
 
     async def email_channel_points(self, event):
+        content = event.input
+        
+        if not any(marker in event.input.lower() for marker in ['subject:', 'body:', 'user:']):
+            content = f"subject:{event.user.name} body:{event.input}"
+        
         email_processor = EmailCommandProcessor()
-        email_message = email_processor.parse_email_string(event.input)
+        email_message = email_processor.parse_email_string(content)
         if not email_message:
             self.logger.debug(f"Invalid email format: {event.input}")
             await self.refund_redemption(event)

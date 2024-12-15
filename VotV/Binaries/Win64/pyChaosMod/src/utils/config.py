@@ -120,7 +120,6 @@ class AsyncConfigManager:
                     callback(self.config)
                 except Exception as e:
                     logger.error(f"Error in config change callback: {e}")
-            logger.info("Configuration reloaded successfully")
         except Exception as e:
             logger.error(f"Error reloading configuration: {e}")
 
