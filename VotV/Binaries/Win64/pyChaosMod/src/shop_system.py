@@ -3,6 +3,7 @@ import time
 import json
 import os
 import asyncio
+import sys
 
 class ShopSystem:
     def __init__(self, config):
@@ -99,12 +100,25 @@ class ShopSystem:
 
     def get_shop_options(self):
         file = "list_store.txt"
+        
+        # Try to get the file from PyInstaller bundle first
+        if hasattr(sys, '_MEIPASS'):
+            bundle_path = os.path.join(sys._MEIPASS, file)
+            if os.path.exists(bundle_path):
+                with open(bundle_path, "r") as f:
+                    return f.read().splitlines()
+        
+        # Try current directory
         if os.path.exists(file):
             with open(file, "r") as f:
                 return f.read().splitlines()
-        else:
-            if os.path.exists(os.path.join("pyChaosMod", file)):
-                with open(os.path.join("pyChaosMod", file), "r") as f:
-                    return f.read().splitlines()
+        
+        # Try pyChaosMod subdirectory
+        subfolder_path = os.path.join("pyChaosMod", file)
+        if os.path.exists(subfolder_path):
+            with open(subfolder_path, "r") as f:
+                return f.read().splitlines()
+        
+        # If all attempts fail
         self.logger.warning("Could not find shop options file. Shop checking will be disabled.")
         return []

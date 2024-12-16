@@ -6,7 +6,7 @@ import shutil
 import time
 import logging
 
-VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/3.0.0/chaosbot_version.txt"
+VERSION_URL = "https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/main/chaosbot_version.txt"
 DOWNLOAD_URL = "https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip"
 
 logging.basicConfig(filename='updater.log', level=logging.INFO,

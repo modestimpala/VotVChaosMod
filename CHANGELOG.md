@@ -1,3 +1,32 @@
+# 3.0.0
+ - Added: 
+	- Full channel points system with custom rewards
+		- Support for special system rewards (email/shop/hint redemptions)
+	- Direct Mode with Online Control Panel for sending specific direct commands to players
+	- Enhanced email support with simple format and improved message parsing
+		- Added support for specific user email handling (e.g., Dr_Bao)
+	- Enhanced shop system with item verification
+	- Implemented new hint system
+		- Can specify hint type (error, warning, thought)
+	- "Always On" mode for most systems, enhancing ease-of-use
+	- Dynamic Config Reloader to reload, enable/disable subsystems on the fly
+	- New custom console logging setup with color formatting
+	- Automatic ChaosBot updating system
+	- New configurable "Small Menu" displaying Chaos status during non-voting periods 
+ - Changed:
+ 	- Updated to 0.8.1
+	- Config files moved to /cfg subfolder
+	- Listen files moved to /listen subfolder
+	- Enhanced voting status checks
+	- Simplified main Lua loop
+	- General code cleanup and optimization
+	- Enhanced error message clarity
+	- Reduced websocket logging noise (this also stops it from logging sensitive info)
+	- Added UTF-8 encoding for log files and created custom stream output for console, eliminating bugs from emojis and such
+	- Nextbots now follow player when on ATV
+	- Moved 26 Lua scripts to Blueprints, reducing potential crashes
+	- Settings disable/enable based on other settings for clarity
+
 # 2.5.0
  Even more overhaul work.
 
