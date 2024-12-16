@@ -1,8 +1,8 @@
 {
     "name": "ChaosMod",
-    "version_number": "2.5.0",
+    "version_number": "3.0.0",
     "website_url": "https://github.com/modestimpala/VotVChaosMod",
-    "description": "A Twitch Chaos Mod for VotV, let chat vote for random commands, send emails, and order from the shop! 100 commands! New offline mode! Highly configurable!",
+    "description": "A highly configurable Twitch Chaos Mod for VotV - let chat vote for random commands, send emails, and order from the shop! 100 commands! Offline, direct mode, and channel point integration!",
     "dependencies": [
         "Thunderstore-unreal_shimloader-1.0.6"
     ]
