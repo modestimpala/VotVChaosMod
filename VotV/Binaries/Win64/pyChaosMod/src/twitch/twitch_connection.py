@@ -62,7 +62,6 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     async def update_systems(self):
         """Update the various systems in the bot."""
         while self.should_run:
-            self.voting_system.update()
             self.email_system.update()
             self.shop_system.update()
             await asyncio.sleep(1/15)  # Update at 15 FPS
