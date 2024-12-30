@@ -1,3 +1,42 @@
+# 3.0.0
+
+### Added
+- Full channel points system with custom rewards
+  - Support for special system rewards (email/shop/hint redemptions)
+- Direct Mode with Online Control Panel for sending specific direct commands to players
+- Enhanced email support with simple format and improved message parsing
+  - Simple format: !email (email) - Subject will be Twitch Username, body is entire message
+  - Advanced format still available
+  - Added support for specific user email handling (e.g., Dr_Bao)
+- Enhanced shop system with item verification
+- Implemented new hint system
+  - !hint command, Hint channel point redemption
+  - Can specify hint type (error, warning, thought)
+- "Always On" mode for most systems, enhancing ease-of-use
+- Dynamic Config Reloader to reload, enable/disable subsystems on the fly
+- New custom console logging setup with color formatting
+- Automatic ChaosBot updating system
+- New configurable "Small Menu" displaying Chaos status during non-voting periods
+- 1 random Glorp Friend Christmas event, 2 random Glorp Friend Random events (secrets)
+
+### Changed
+- Updated to 0.8.1
+- Config files moved to /cfg subfolder
+- Listen files moved to /listen subfolder
+- Enhanced voting status checks
+- Simplified main Lua loop
+- General code cleanup and optimization
+- Enhanced error message clarity
+- Setting inputs disable/enable based on other settings for clarity
+- Moved 26 Lua scripts to Blueprints
+
+### Fixed
+- ChaosBot is now launched as Admin to fix issues described by Mimi on Discord
+- Fixed issues with incorrect voting options appearing during voting rounds (Thanks Mimi)
+- Reduced websocket logging noise (stops logging of sensitive info)
+- Added UTF-8 encoding for log files and created custom stream output for console, eliminating bugs from emojis
+- Nextbots now follow player when on ATV
+
 # 2.5.0
  Even more overhaul work.
 
