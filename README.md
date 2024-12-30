@@ -1,11 +1,11 @@
 
 <p align="center" width="100%">
-    <img src="https://www.dropbox.com/scl/fi/czranvxdkilts94vo4ru0/chaos-banner.png?rlkey=02vfpe08u637j2q2rsghklu6g&st=vsp8apzf&dl=1">
+    <img src="https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/main/img/chaos-banner.png">
 </p>
 
 
 <p align="center" width="100%">
-<a href="https://discord.gg/Bq7HCMRfjk"><img width="5%" src="https://www.dropbox.com/scl/fi/96uoyd529gq617880m0cu/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png?rlkey=343xgtya1h3r53bblx8lns473&st=ih0q2alh&dl=1"></a>
+<a href="https://discord.gg/Bq7HCMRfjk"><img width="5%" src="https://raw.githubusercontent.com/modestimpala/VotVChaosMod/refs/heads/main/img/discord.png"></a>
 </p>
 
 ### Twitch Chaos Mod
@@ -13,13 +13,13 @@
   
 Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with 100 different commands to vote for!
 
-Version 2.5 introduces a brand new Offline Mode that runs without Twitch Integration. When enabled, it will randomly run commands based on configurable options.
+Version 3.0.0 introduces a full Channel Points integration that lets viewers redeem custom rewards for Chaos Commands, emails, shop items, and hints. These rewards can be configured individually and run alongside regular Twitch voting.
 
-You can now configure each option individually to be enabled in Twitch Voting or Offline Mode. 
+A brand new Direct Mode with an Online Control Panel has been added that runs alongside Twitch Integration. When enabled, it allows sending specific commands directly to players through a web interface.
 
-Additionally, the Twitch Bot was overhauled to be much more stable, many commands were reworked into blueprints, 18 new commands were added, and several issues with voting and overall functionality were fixed. 
+Each system now runs in "Always On" mode and reloaded/toggled dynamically through the a new dynamic config reloader. The email and shop systems were reworked with improved parsing and verification, a new Small Menu was added to display Chaos status, and 26 Lua scripts were moved to Blueprints for better stability.
 
-See changelog for more specific changes.
+See changelog for specific changes.
 
 ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button automatically downloads and runs a pre-built exe making installation a breeze. If you still want to run from source, it can automatically launch the python file for you. 
 
@@ -30,7 +30,11 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 
 - Twitch chat voting system
 
+- Channel Point integration
+
 - Offline Mode that randomly runs commands without Twitch Integration
+
+- Direct Mode to send commands over a web interface
 
 - Built in automatic installation of Twitch bot
 
@@ -38,7 +42,7 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 
 - Highly Customizable
 
-- Email system and Shop system for viewer interaction - users can send emails to the in-game computer and order items from the shop 
+- Email, Hint, and Shop system for viewer interaction - users can send emails to the in-game computer, order items from the shop and send hints of specific types
 
 - Stylish In-game UI to display votes and ChaosMod status
 
@@ -58,7 +62,7 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 1. Install ChaosMod and unreal-shimloader
 
 
-2. Get an OAuth bot token from https://twitchtokengenerator.com/
+2. Get an OAuth bot token from https://twitchtokengenerator.com/ --- Channel Points / Chat OAuth Quick Link: https://twitchtokengenerator.com/quick/76EdtsccRT
 
 
 3. Launch the game and configure settings from main menu
@@ -87,7 +91,7 @@ If you want to download the exe manually, or run from source, see below.
     - Python source requires psutil package (pip install psutil)
 
 
-5. Get an OAuth bot token from https://twitchtokengenerator.com/
+5. Get an OAuth bot token from https://twitchtokengenerator.com/ --- Channel Points / Chat OAuth Quick Link: https://twitchtokengenerator.com/quick/76EdtsccRT
 
 
 6. Launch the game and configure settings from main menu

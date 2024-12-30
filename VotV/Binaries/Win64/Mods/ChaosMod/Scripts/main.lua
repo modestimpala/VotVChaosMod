@@ -564,7 +564,8 @@ function launchChaosBot()
 
         -- Launch executable
         print("[ChaosMod] Attempting to launch executable: " .. exePath)
-        local success, err, code = os.execute(string.format('start "" "%s"', exePath))
+        local psCmd = string.format('powershell.exe -Command "Start-Process -FilePath \'%s\' -Verb RunAs"', exePath)
+        local success, err, code = os.execute(psCmd)
         if success then
             print("[ChaosMod] Executable opened successfully: " .. exePath)
         else
