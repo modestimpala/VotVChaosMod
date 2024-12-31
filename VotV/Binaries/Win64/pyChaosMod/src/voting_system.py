@@ -29,7 +29,7 @@ class VotingSystem:
                 }
                 
                 await self.websocket_handler.game_connection.send(json.dumps(message))
-                self.logger.info(f"Sent vote update: {vote_counts}")
+                self.logger.debug(f"Sent vote update: {vote_counts}")
             except Exception as e:
                 self.logger.error(f"Failed to send vote update: {e}")
         else:
@@ -61,22 +61,26 @@ class VotingSystem:
 
     def process_vote(self, username, vote):
         """Process a vote from a user."""
-        if self.voting_active and 0 <= vote < self.num_options and username not in self.voters:
-            self.votes[vote - 1] = self.votes.get(vote, 0) + 1
+        if self.voting_active and 1 <= vote <= self.num_options and username not in self.voters:
+            self.logger.debug(f"Received vote from {username}: {vote}")
+            self.votes[vote - 1] = self.votes.get(vote - 1, 0) + 1
             self.voters.add(username)
+        else:
+            self.logger.debug(f"Ignored vote from {username}: {vote}, voting_active={self.voting_active}, num_options={self.num_options}, username in voters={username in self.voters}")
+
 
     def set_voting_active(self, active, num_options=0):
         """Set the voting status and number of options."""
         if active != self.voting_active:
             self.voting_active = active
             if active:
-                self.logger.info(f"Voting opened with {num_options} options")
+                self.logger.debug(f"Voting opened with {num_options} options")
                 self.num_options = num_options
                 self.votes = {i: 0 for i in range(num_options)}
                 self.voters.clear()
                 self.start_vote_updates()
             else:
-                self.logger.info("Voting closed")
+                self.logger.debug("Voting closed")
                 self.voters.clear()
                 self.stop_vote_updates()
 
