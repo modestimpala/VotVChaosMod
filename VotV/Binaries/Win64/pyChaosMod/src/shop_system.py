@@ -83,3 +83,7 @@ class ShopSystem:
     def update_config(self, config):
         """Update configuration."""
         self.config = config
+
+    def is_shop_open(self):
+        """Check if the shop is open."""
+        return self.shop_open
