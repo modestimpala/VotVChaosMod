@@ -74,16 +74,7 @@ class AsyncConfigManager:
                         config[section][key] = value
 
         config['files'] = {
-            'emails_master': os.path.join(self.base_path, 'emails_master.json'),
-            'shops_master': os.path.join(self.base_path, 'shops_master.json'),
-            'hints_master': os.path.join(self.base_path, 'hints_master.json'),
-            'direct_master': os.path.join(self.base_path, 'direct_master.json'),
-            'emails_enable': os.path.join(base_path_listen, 'emails_enable.txt'),
-            'commands': os.path.join(base_path_cfg, 'twitchChannelPoints.cfg'),
-            'votes': os.path.join(base_path_listen, 'votes.txt'),
-            'enable': os.path.join(base_path_listen, 'enable.txt'),
-            'isVoting': os.path.join(base_path_listen, 'voting_enabled.txt'),
-            'shopOpen': os.path.join(base_path_listen, 'shopOpen.txt'),
+            'commands': os.path.join(base_path_cfg, 'twitchChannelPoints.cfg')
         }
         
         if not os.path.exists(config['files']['commands']):
@@ -92,9 +83,6 @@ class AsyncConfigManager:
         config['version'] = '3.0.0'
         self.config = config
         return config
-
-    def is_chaos_enabled(self) -> bool:
-        return os.path.exists(self.config['files']['enable'])
 
     class ConfigFileHandler(FileSystemEventHandler):
         def __init__(self, config_manager):

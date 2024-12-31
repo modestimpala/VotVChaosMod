@@ -1,23 +1,20 @@
 import logging
 import time
 import json
-import os
 import asyncio
-import sys
 
 class ShopSystem:
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
         self.config = config
         self.user_shop_cooldowns = {}
-        self.master_file = config['files']['shops_master']
-        self.shop_open_file = config['files']['shopOpen']
-        self.shopOpen = False
+        self.shop_open = False
+        self.websocket_handler = None
         self.twitch_connection = None
         self.direct_connection = None
-        self.shop_options = self.get_shop_options()
 
-        
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
 
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
@@ -26,99 +23,63 @@ class ShopSystem:
         self.direct_connection = direct_connection
 
     async def process_shop(self, item, username="direct", ctx=None, amount=1):
+        """Process a shop request from either Twitch chat or direct connection."""
         if not self.config['chatShop'].get('enabled', False):
             return
-       
+
+        if not self.shop_open and username != "direct":
+            if ctx and self.twitch_connection:
+                await self.twitch_connection.reply(ctx, "The shop is currently closed.")
+            return
+
         current_time = time.time()
 
+        # Handle Twitch-specific checks
         if ctx is not None:
             # Check user cooldown
             if username in self.user_shop_cooldowns:
                 time_since_last_use = current_time - self.user_shop_cooldowns[username]
-                if time_since_last_use < self.config['chatShop'].get('usercooldown', 300):  # Default 5 minutes cooldown
+                if time_since_last_use < self.config['chatShop'].get('usercooldown', 300):
                     remaining_cooldown = int(self.config['chatShop']['usercooldown'] - time_since_last_use)
                     await self.twitch_connection.reply(ctx, f"You're on cooldown. You can use the shop again in {remaining_cooldown} seconds.")
                     return
-            if item not in self.shop_options and self.shop_options is not []:
-                await self.twitch_connection.reply(ctx, f"Invalid item. Please choose from the following: https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt")
-                return
 
-        # Process the shop request
-        shop_data = {
-            "username": username,
-            "item": item,
-            "amount": amount,
-            "timestamp": current_time,
-            "processed": False
-        }
+        # Send shop request to game
+        if self.websocket_handler and self.websocket_handler.game_connection:
+            try:
+                shop_data = {
+                    "type": "shop_request",
+                    "username": username,
+                    "item": item,
+                    "amount": amount,
+                    "timestamp": current_time
+                }
+                await self.websocket_handler.game_connection.send(json.dumps(shop_data))
+                self.logger.debug(f"Shop request sent for {username}: {item}")
 
-        self.logger.debug(f"Shop order processed for {username}: {item}")
-        orders = self.read_master_file()
-        orders.append(shop_data)
-        self.write_master_file(orders)
-        if self.twitch_connection is not None:
-            # Update user's cooldown
-            self.user_shop_cooldowns[username] = current_time
+                # Update user's cooldown for Twitch users
+                if ctx is not None:
+                    self.user_shop_cooldowns[username] = current_time
 
-    def read_master_file(self):
-        if os.path.exists(self.master_file):
-            with open(self.master_file, 'r') as f:
-                return json.load(f)
-        return []
+            except Exception as e:
+                self.logger.error(f"Failed to send shop request: {e}")
 
-    def write_master_file(self, data):
-        with open(self.master_file, 'w') as f:
-            json.dump(data, f, indent=2)
+    def set_shop_open(self, is_open):
+        """Set shop open status and handle announcements."""
+        if self.shop_open == is_open:
+            return
 
-    def is_shop_open(self):
-        if self.direct_connection is not None:
-            return True
-
-        if os.path.exists(self.shop_open_file):
-            with open(self.shop_open_file, 'r') as f:
-                return f.read().strip().lower() == 'true'
-        return False
-
-    def update(self):
-        # if using channel points, don't broadcast shop status, shop is always open
-        if not self.config.get('chatShop', {}).get('channel_points', False):
-            # if the shop just opened, broadcast a message
-            if self.is_shop_open() and not self.shopOpen:
-                announcement = self.config['chatShop']['announcement_message'].format(duration=self.config['chatShop']['open_duration'])
+        self.shop_open = is_open
+        
+        # Announce shop status changes in Twitch chat if configured
+        if self.twitch_connection and not self.config.get('chatShop', {}).get('channel_points', False):
+            if is_open:
+                announcement = self.config['chatShop']['announcement_message'].format(
+                    duration=self.config['chatShop']['open_duration']
+                )
                 asyncio.create_task(self.twitch_connection.queue_message(announcement))
-                self.shopOpen = True
-            elif not self.is_shop_open() and self.shopOpen and self.twitch_connection is not None:
-                self.shopOpen = False
-            pass
+            # Could add a shop closing announcement here if desired
 
-    def is_in_shop_options(self, item):
-        return item in self.shop_options
-    
     def update_config(self, config):
+        """Update configuration."""
         self.config = config
-        self.shop_options = self.get_shop_options()
-
-    def get_shop_options(self):
-        file = "list_store.txt"
-        
-        # Try to get the file from PyInstaller bundle first
-        if hasattr(sys, '_MEIPASS'):
-            bundle_path = os.path.join(sys._MEIPASS, file)
-            if os.path.exists(bundle_path):
-                with open(bundle_path, "r") as f:
-                    return f.read().splitlines()
-        
-        # Try current directory
-        if os.path.exists(file):
-            with open(file, "r") as f:
-                return f.read().splitlines()
-        
-        # Try pyChaosMod subdirectory
-        subfolder_path = os.path.join("pyChaosMod", file)
-        if os.path.exists(subfolder_path):
-            with open(subfolder_path, "r") as f:
-                return f.read().splitlines()
-        
-        # If all attempts fail
-        self.logger.warning("Could not find shop options file. Shop checking will be disabled.")
-        return []

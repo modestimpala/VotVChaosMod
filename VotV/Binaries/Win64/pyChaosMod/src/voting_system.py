@@ -32,14 +32,8 @@ class VotingSystem:
                 self.logger.info(f"Sent vote update: {vote_counts}")
             except Exception as e:
                 self.logger.error(f"Failed to send vote update: {e}")
-        elif not self.websocket_handler:
-            self.logger.error("No WebSocket handler to send vote update")
-        elif not self.websocket_handler.game_connection:
-            self.logger.error("No game connection to send vote update")
-        elif not self.voting_active:
-            self.logger.error("Voting is not active")
-        else :
-            self.logger.error("Unknown error in send_votes_update")
+        else:
+            self.logger.error("No game connection available to send vote update")
 
     async def vote_update_loop(self):
         """Continuously send vote updates while voting is active."""
@@ -47,7 +41,7 @@ class VotingSystem:
             try:
                 if self.voting_active:
                     await self.send_votes_update()
-                await asyncio.sleep(1)  # Update interval
+                await asyncio.sleep(1)  # Update interval is 1 second
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -68,7 +62,7 @@ class VotingSystem:
     def process_vote(self, username, vote):
         """Process a vote from a user."""
         if self.voting_active and 0 <= vote < self.num_options and username not in self.voters:
-            self.votes[vote] = self.votes.get(vote, 0) + 1
+            self.votes[vote - 1] = self.votes.get(vote, 0) + 1
             self.voters.add(username)
 
     def set_voting_active(self, active, num_options=0):
