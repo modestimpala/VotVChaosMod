@@ -1,4 +1,5 @@
 import asyncio
+import time
 import websockets
 import json
 import logging
@@ -26,13 +27,13 @@ class WebSocketHandler:
                     # Test if existing connection is still alive
                     pong = await self.game_connection.ping()
                     if not pong:
-                        logger.info("Previous game connection is dead, allowing new connection")
+                        logger.debug("Previous game connection is dead, allowing new connection")
                         self.game_connection = None
                     else:
                         logger.warning("Rejecting additional connection attempt - game already connected")
                         return
                 except websockets.exceptions.ConnectionClosed:
-                    logger.info("Previous game connection was closed, allowing new connection")
+                    logger.debug("Previous game connection was closed, allowing new connection")
                     self.game_connection = None
             
             self.game_connection = websocket
@@ -42,7 +43,7 @@ class WebSocketHandler:
             async for message in websocket:
                 try:
                     data = json.loads(message)
-                    logger.info(f"Received game message: {data}")
+                    logger.debug(f"Received game message: {data}")
 
                     if 'type' in data:
                         if data['type'] == 'connection_test':
@@ -50,17 +51,17 @@ class WebSocketHandler:
                                 "type": "connection_test_succ"
                             }))
                         elif data['type'] == 'voting_started':
-                            logger.info("Received voting_started message from game")
+                            logger.debug("Received voting_started message from game")
                             num_options = data.get('num_options', 0)
                             self.voting_system.set_voting_active(True, num_options)
                         elif data['type'] == 'voting_ended':
-                            logger.info("Received voting_ended message from game")
+                            logger.debug("Received voting_ended message from game")
                             self.voting_system.set_voting_active(False)
                         elif data['type'] == 'shop_open':
-                            logger.info("Received shop_open message from game")
+                            logger.debug("Received shop_open message from game")
                             self.shop_system.set_shop_open(True)
                         elif data['type'] == 'shop_close':
-                            logger.info("Received shop_close message from game")
+                            logger.debug("Received shop_close message from game")
                             self.shop_system.set_shop_open(False)
 
                 except json.JSONDecodeError:
@@ -112,7 +113,8 @@ class WebSocketHandler:
                 ping_interval=30,
                 ping_timeout=10
             )
-            logger.info(f"Game WebSocket server started on ws://localhost:{self.port}")
+            logger.debug(f"Game WebSocket server started on ws://localhost:{self.port}")
+            logger.info("Game Connection server started. Waiting for game connection...")
 
             # Very important
             self.voting_system.set_websocket_handler(self)
@@ -147,7 +149,7 @@ class WebSocketHandler:
                 await self.server.wait_closed()
                 self.server = None
 
-            logger.info("WebSocket server shutdown complete")
+            logger.debug("WebSocket server shutdown complete")
         except Exception as e:
             logger.error(f"Error during WebSocket server shutdown: {e}")
         finally:
