@@ -16,8 +16,9 @@ class WebSocketHandler:
         self.server = None
         self.port = config.get('websocket', {}).get('port', 3201)
         self._running = False
+    
 
-    async def handle_connection(self, websocket, path):
+    async def handle_connection(self, websocket, path=None):
         """Handle game WebSocket connection."""
         try:
             if self.game_connection is not None:
@@ -55,12 +56,12 @@ class WebSocketHandler:
                         elif data['type'] == 'voting_ended':
                             logger.info("Received voting_ended message from game")
                             self.voting_system.set_voting_active(False)
-                        elif data['type'] == 'shop':
-                            await self.shop_system.handle_request(data)
-                        elif data['type'] == 'hint':
-                            await self.hint_system.handle_request(data)
-                        elif data['type'] == 'email':
-                            await self.email_system.handle_request(data)
+                        elif data['type'] == 'shop_open':
+                            logger.info("Received shop_open message from game")
+                            self.shop_system.set_shop_open(True)
+                        elif data['type'] == 'shop_close':
+                            logger.info("Received shop_close message from game")
+                            self.shop_system.set_shop_open(False)
 
                 except json.JSONDecodeError:
                     logger.error("Invalid JSON received from game")
@@ -76,6 +77,21 @@ class WebSocketHandler:
             if self.voting_system.voting_active:
                 self.voting_system.set_voting_active(False)
             logger.info("Game disconnected from WebSocket server")
+            
+    async def process_chaos_command(self, command_type: str, command: str) -> None:
+        """
+        Processes a chaos command by sending it to the game connection.
+
+        Args:
+            command_type (str): The type of the command.
+            command (str): The command to be processed.
+        """
+        direct = {
+            "type": command_type,
+            "command": command,
+            "timestamp": time.time(),
+        }
+        await self.game_connection.send(json.dumps(direct))
 
     async def start(self):
         """Start the WebSocket server."""
@@ -100,6 +116,9 @@ class WebSocketHandler:
 
             # Very important
             self.voting_system.set_websocket_handler(self)
+            self.shop_system.set_websocket_handler(self)
+            self.email_system.set_websocket_handler(self)
+            self.hint_system.set_websocket_handler(self)
 
             # Keep the server running
             await self.server.wait_closed()

@@ -1,6 +1,6 @@
 import signal
 import sys
-from src.game.game_connection import WebSocketHandler
+from src.game_connection.websocket_handler import WebSocketHandler
 from src.hint_system import HintSystem
 from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
@@ -74,6 +74,8 @@ class ConnectionManager:
             config, self.voting_system, self.email_system, 
             self.shop_system, self.hint_system
         )
+        if self.websocket_handler:
+            self.twitch_connection.set_websocket_handler(self.websocket_handler)
         self.tasks.append(
             asyncio.create_task(
                 self.task_manager.start_task(
@@ -87,6 +89,8 @@ class ConnectionManager:
         self.direct_connection = DirectModeHandler(
             config, self.email_system, self.shop_system, self.hint_system
         )
+        if self.websocket_handler:
+            self.direct_connection.set_websocket_handler(self.websocket_handler)
         self.tasks.append(
             asyncio.create_task(
                 self.task_manager.start_task(

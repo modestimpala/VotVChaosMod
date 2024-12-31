@@ -1,7 +1,6 @@
 import re
 import logging
 import asyncio
-from src.utils.chaos_file_handler import ChaosFileHandler
 from src.twitch.pubsub_mixin import PubSubMixin
 from src.twitch.channel_points_mixin import ChannelPointsMixin
 from src.dataclass.email_message import EmailCommandProcessor
@@ -18,8 +17,8 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
         self.shop_system.set_twitch_connection(self)
         self.email_system.set_twitch_connection(self)
-
-        self.direct_file_handler = ChaosFileHandler(config['files']['direct_master'])
+        
+        self.websocket_handler = None
 
         self.config = config
         self.message_queue = asyncio.Queue()
@@ -41,6 +40,9 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
             prefix='!',
             initial_channels=[f"#{self.config['twitch']['channel']}"]
         )
+        
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
 
     async def start(self):
         """Start the Twitch connection."""
@@ -63,17 +65,14 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         """Update the various systems in the bot."""
         while self.should_run:
             self.email_system.update()
-            self.shop_system.update()
             await asyncio.sleep(1/15)  # Update at 15 FPS
 
     async def event_ready(self):
         self.logger.info(f'Logged in as | {self.nick}')
         self.is_connected = True
 
-        # Initialize channel points system if enabled
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.initialize_channel_points()
-            await self.initialize_pubsub()
+        await self.initialize_channel_points()
+        await self.initialize_pubsub()
 
         self.loop.create_task(self.process_message_queue())
         self.loop.create_task(self.update_systems())
