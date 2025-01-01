@@ -1,7 +1,6 @@
 import re
 import logging
 import asyncio
-from src.utils.chaos_file_handler import ChaosFileHandler
 from src.twitch.pubsub_mixin import PubSubMixin
 from src.twitch.channel_points_mixin import ChannelPointsMixin
 from src.dataclass.email_message import EmailCommandProcessor
@@ -18,8 +17,8 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
         self.shop_system.set_twitch_connection(self)
         self.email_system.set_twitch_connection(self)
-
-        self.direct_file_handler = ChaosFileHandler(config['files']['direct_master'])
+        
+        self.websocket_handler = None
 
         self.config = config
         self.message_queue = asyncio.Queue()
@@ -41,6 +40,9 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
             prefix='!',
             initial_channels=[f"#{self.config['twitch']['channel']}"]
         )
+        
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
 
     async def start(self):
         """Start the Twitch connection."""
@@ -62,37 +64,36 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     async def update_systems(self):
         """Update the various systems in the bot."""
         while self.should_run:
-            self.voting_system.update()
             self.email_system.update()
-            self.shop_system.update()
             await asyncio.sleep(1/15)  # Update at 15 FPS
 
     async def event_ready(self):
         self.logger.info(f'Logged in as | {self.nick}')
         self.is_connected = True
 
-        # Initialize channel points system if enabled
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.initialize_channel_points()
-            await self.initialize_pubsub()
+        await self.initialize_channel_points()
+        await self.initialize_pubsub()
 
         self.loop.create_task(self.process_message_queue())
         self.loop.create_task(self.update_systems())
         self.logger.info("ChaosBot is now running...")
         self.logger.info("Use Ctrl+C to stop the bot gracefully.")
-        if self.config.get('twitch', {}).get('channel_points', False):
+        
+        if self.config.get('twitch', {}).get('channel_points', False) or self.config.get('chatShop', {}).get('channel_points', False) or self.config.get('emails', {}).get('channel_points', False) or self.config.get('hints', {}).get('channel_points', False):
             self.logger.info("Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
         """Handle channel point redemption events from PubSub."""
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.handle_redemption(event)
+        self.logger.debug(f"Received channel points event: {event}")
+        
+        await self.handle_redemption(event)
 
     async def process_message_queue(self):
         """Process the message queue."""
         while self.should_run:
             try:
                 message = await asyncio.wait_for(self.message_queue.get(), timeout=1.0)
+                self.logger.debug(f"Processing message from queue: {message}")
                 await self.send_message(message)
                 self.message_queue.task_done()
             except asyncio.TimeoutError:
@@ -100,6 +101,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     
     async def queue_message(self, message):
         """Queue a message to be sent."""
+        self.logger.debug(f"Queueing message: {message}")
         await self.message_queue.put(message)
 
     async def event_message(self, ctx):
@@ -112,15 +114,18 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
     async def reply(self, ctx, message):
         """Reply to a ctx message in the Twitch chat."""
+        self.logger.debug(f"Replying to {ctx.author.name} with message: {message}")
         await ctx.reply(message)
 
     async def send_message(self, message):
         """Send a message to the Twitch chat."""
+        self.logger.debug(f"Sending message: {message}")
         channel = self.get_channel(self.config['twitch']['channel'])
         await channel.send(message)
 
     def get_messages(self):
         """Get all messages from the message queue."""
+        self.logger.debug("Getting all messages from the message queue")
         messages = []
         while not self.message_queue.empty():
             messages.append(self.message_queue.get())
@@ -129,6 +134,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     @commands.command()
     async def shop(self, ctx, item : str | None):
         """Command to interact with the shop system."""
+        self.logger.debug(f"Shop command invoked by {ctx.author.name} with item: {item}")
         if self.config.get('chatShop', {}).get('channel_points', False):
             await ctx.reply("Please use channel points to interact with the shop.")
             return
@@ -143,6 +149,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     @commands.command()
     async def email(self, ctx: commands.Context):
         """Command to send emails."""
+        self.logger.debug(f"Email command invoked by {ctx.author.name}")
         if self.config.get('emails', {}).get('channel_points', False):
             await ctx.reply("Please use channel points to send emails.")
             return
@@ -173,6 +180,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
     @commands.command()
     async def hint(self, ctx: commands.Context, hint_text: str):
         """Command to send hints."""
+        self.logger.debug(f"Hint command invoked by {ctx.author.name} with hint: {hint_text}")
         if self.config.get('hints', {}).get('channel_points', False):
             await ctx.reply("Please use channel points to send hints.")
             return
@@ -181,6 +189,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
     def is_connected_to_twitch(self):
         """Check if the bot is connected to Twitch."""
+        self.logger.debug(f"Checking if connected to Twitch: {self.is_connected}")
         return self.is_connected
     
     async def update_config(self, new_config):
@@ -217,8 +226,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         self.logger.info("Closing Twitch Connection...")
         self.should_run = False
 
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.remove_all_rewards()
+        await self.remove_all_rewards()
 
         # Close websocket connection
         if hasattr(self, '_ws') and self._ws:
@@ -242,4 +250,3 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
 
 
 
-        

@@ -32,3 +32,7 @@ VotV/Binaries/Win64/pyChaosMod/ChaosBot_Updater.exe
 VotV/Binaries/Win64/pyChaosMod/myvenv/*
 /.idea/*
 .vscode/launch.json
+VotV/Binaries/Win64/pyChaosMod/src/game/__pycache__/game_connection.cpython-312.pyc
+VotV/Binaries/Win64/pyChaosMod/src/game_connection/__pycache__/game_connection.cpython-312.pyc
+VotV/Binaries/Win64/pyChaosMod/src/game_connection/__pycache__/websocket_handler.cpython-312.pyc
+VotV/Binaries/Win64/pyChaosMod/twitch_benchmark.py
