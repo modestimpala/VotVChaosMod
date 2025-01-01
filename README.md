@@ -13,6 +13,8 @@
   
 Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with 100 different commands to vote for!
 
+Version 3.1.0: Changed game communication to WebSocket for better reliability (drops 0.7 support) and added a queue system to Chat Shop that processes orders faster when busy.
+
 Version 3.0.0 introduces a full Channel Points integration that lets viewers redeem custom rewards for Chaos Commands, emails, shop items, and hints. These rewards can be configured individually and run alongside regular Twitch voting.
 
 A brand new Direct Mode with an Online Control Panel has been added that runs alongside Twitch Integration. When enabled, it allows sending specific commands directly to players through a web interface.
@@ -148,6 +150,10 @@ Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* f
   
 
 # Showcase
+
+<a href="https://www.youtube.com/watch?v=ygf_yA7nJtU"><img src="https://img.youtube.com/vi/ygf_yA7nJtU/hqdefault.jpg"></a>
+
+<a href="https://www.youtube.com/watch?v=0nfU4AxEBnE"><img src="https://img.youtube.com/vi/0nfU4AxEBnE/hqdefault.jpg"></a>
 
 ![image](https://github.com/user-attachments/assets/7d0ec698-d2c9-4774-989c-850344bb03f4) ![image](https://github.com/user-attachments/assets/981ed31e-2923-4a90-9d96-f2166d46d643)
 
