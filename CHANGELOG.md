@@ -1,3 +1,12 @@
+# 3.1.0
+
+### Changed
+- Migrated away from "listen" text/json files for game communication to WebSocket server. Mod no longer supports 0.7. 
+  - Hopefully resolves mysterious connection issues where game does not register votes, commands, etc.
+  - More info: https://discord.com/channels/1285223290520207411/1285223379598839899/1323558223755870208
+- Chat Shop now has an Order Queue
+  - Orders are placed every minute if queue available. If queue is above 8 items, the order will be placed within 15 seconds.
+
 # 3.0.0
 
 ### Added
