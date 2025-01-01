@@ -27,12 +27,11 @@ class ChannelPointsMixin:
         # Check for leftover rewards from previous sessions
         await self.check_leftover_rewards()
         
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.get_broadcaster()
-            if self.broadcaster:
-                await self.create_rewards()
-            else:
-                self.logger.error("Failed to get broadcaster. Cannot create rewards.")
+        await self.get_broadcaster()
+        if self.broadcaster:
+            await self.create_rewards()
+        else:
+            self.logger.error("Failed to get broadcaster. Cannot create rewards.")
 
     async def check_leftover_rewards(self):
         """Check for and handle any leftover rewards from previous sessions."""
@@ -165,7 +164,10 @@ class ChannelPointsMixin:
         """Create channel point rewards."""
         # First create special system rewards if enabled
         await self.create_special_system_rewards()
-
+        
+        if not self.config.get('twitch', {}).get('channel_points', False):
+            self.logger.debug("Chaos Command Channel points are disabled. Skipping custom reward creation.")
+            return
         # Then create regular command rewards
         commands = self.load_commands()
         enabled_commands_count = sum(1 for cmd in commands if cmd['isEnabledForPoints'])
@@ -426,6 +428,7 @@ class ChannelPointsMixin:
             await self.refund_redemption(event)
             return
         
+        self.logger.debug(f"Processing shop item: {event.input}")
         await self.shop_system.process_shop(event.input, event.user.name)
         await self.fulfill_redemption(event)
 
@@ -435,7 +438,7 @@ class ChannelPointsMixin:
 
     async def chaos_command_channel_points(self, event, command_id):
         # Handle chaos command redemption
-        await self.direct_file_handler.process_chaos_command("trigger_chaos", command_id)
+        await self.websocket_handler.process_chaos_command("trigger_chaos", command_id)
         await self.fulfill_redemption(event)
         pass
 

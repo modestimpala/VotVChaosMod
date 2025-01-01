@@ -9,8 +9,7 @@ class PubSubMixin:
     async def initialize_pubsub(self):
         """Initialize PubSub connection."""
         self.pubsub = None
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.setup_pubsub()
+        await self.setup_pubsub()
 
     async def setup_pubsub(self):
         """Set up PubSub connection for channel points."""

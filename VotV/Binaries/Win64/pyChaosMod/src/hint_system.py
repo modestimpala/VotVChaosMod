@@ -1,8 +1,7 @@
 import time
 import json
-import os
-import asyncio
 import re
+import logging
 from typing import Tuple, Optional
 
 class HintSystem:
@@ -11,8 +10,12 @@ class HintSystem:
     def __init__(self, config):
         self.config = config
         self.hint_cooldowns = {}
-        self.master_file = config['files']['hints_master']
         self.twitch_connection = None
+        self.websocket_handler = None
+        self.logger = logging.getLogger(__name__)
+        
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
         
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
@@ -26,14 +29,7 @@ class HintSystem:
         Parse a hint string in the format "(type) hint_message"
         Valid types are: info, warning, error, thought
         If no type is specified or type is invalid, defaults to "info"
-        
-        Args:
-            hint_text (str): The hint text to parse
-            
-        Returns:
-            Tuple[str, str]: (hint_type, hint_message)
         """
-        # Regular expression to match the pattern (type) message
         pattern = r'^\s*\((\w+)\)\s*(.+)$'
         
         match = re.match(pattern, hint_text)
@@ -81,29 +77,32 @@ class HintSystem:
                     await self.twitch_connection.reply(ctx, cooldown_message)
                     return
         
-        # Add the hint to the master file
-        hints = self.read_master_file()
-        hints.append({
-            "type": hint_type,
-            "hint": hint_message,
-            "timestamp": time.time(),
-            "processed": False
-        })
-        self.write_master_file(hints)
+        # Send the hint through WebSocket
+        await self.send_hint(hint_type, hint_message)
         
         # Update cooldown if we have a Twitch context
         if self.twitch_connection is not None and ctx is not None:
             self.hint_cooldowns[ctx.author.name] = current_time
+
+    async def send_hint(self, hint_type: str, hint_message: str):
+        """Send hint through WebSocket connection."""
+        if self.websocket_handler and self.websocket_handler.game_connection:
+            hint_data = {
+                "type": "hint",
+                "data": {
+                    "type": hint_type,
+                    "hint": hint_message,
+                    "timestamp": time.time()
+                }
+            }
             
-    def read_master_file(self):
-        if os.path.exists(self.master_file):
-            with open(self.master_file, 'r') as f:
-                return json.load(f)
-        return []
+            try:
+                await self.websocket_handler.game_connection.send(json.dumps(hint_data))
+                self.logger.debug(f"Hint sent: {hint_type} - {hint_message}")
+            except Exception as e:
+                self.logger.error(f"Failed to send hint through WebSocket: {e}")
+        else:
+            self.logger.error("WebSocket connection not available")
     
     def update_config(self, config):
         self.config = config
-        
-    def write_master_file(self, data):
-        with open(self.master_file, 'w') as f:
-            json.dump(data, f, indent=2)
