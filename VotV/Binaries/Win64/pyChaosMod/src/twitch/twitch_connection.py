@@ -78,14 +78,15 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         self.loop.create_task(self.update_systems())
         self.logger.info("ChaosBot is now running...")
         self.logger.info("Use Ctrl+C to stop the bot gracefully.")
-        if self.config.get('twitch', {}).get('channel_points', False):
+        
+        if self.config.get('twitch', {}).get('channel_points', False) or self.config.get('chatShop', {}).get('channel_points', False) or self.config.get('emails', {}).get('channel_points', False) or self.config.get('hints', {}).get('channel_points', False):
             self.logger.info("Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
         """Handle channel point redemption events from PubSub."""
         self.logger.debug(f"Received channel points event: {event}")
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.handle_redemption(event)
+        
+        await self.handle_redemption(event)
 
     async def process_message_queue(self):
         """Process the message queue."""
@@ -225,8 +226,7 @@ class TwitchConnection(commands.Bot, ChannelPointsMixin, PubSubMixin):
         self.logger.info("Closing Twitch Connection...")
         self.should_run = False
 
-        if self.config.get('twitch', {}).get('channel_points', False):
-            await self.remove_all_rewards()
+        await self.remove_all_rewards()
 
         # Close websocket connection
         if hasattr(self, '_ws') and self._ws:

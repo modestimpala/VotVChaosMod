@@ -428,6 +428,7 @@ class ChannelPointsMixin:
             await self.refund_redemption(event)
             return
         
+        self.logger.debug(f"Processing shop item: {event.input}")
         await self.shop_system.process_shop(event.input, event.user.name)
         await self.fulfill_redemption(event)
 
