@@ -6,8 +6,6 @@ import json
 import webbrowser
 import ssl
 
-from src.utils.chaos_file_handler import ChaosFileHandler
-
 logger = logging.getLogger(__name__)
 
 class DirectModeHandler:
@@ -21,12 +19,13 @@ class DirectModeHandler:
         self.websocket = None
         self.session_key = None
         self.captcha_verified = False
+        self.websocket_handler = None
 
         self.email_system.set_direct_connection(self)
         self.shop_system.set_direct_connection(self)
-
-        self.file_handler = ChaosFileHandler(config['files']['direct_master'])
         
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
 
     async def start(self):
         """Establishes a WebSocket connection to the Chaos control panel."""
@@ -150,8 +149,11 @@ class DirectModeHandler:
             await self.websocket.close()
         logger.info("DirectModeHandler closed")
 
-    async def process_chaos_command(self, type, command):
-        """Processes chaos commands."""
-        await self.file_handler.process_chaos_command(type, command)
+    async def process_chaos_command(self, command_type, command):
+        """Processes chaos commands through the WebSocket connection."""
+        if self.websocket_handler:
+            await self.websocket_handler.process_chaos_command(command_type, command)
+        else:
+            logger.error("WebSocket handler not set, cannot process command")
 
 # The main function in chaosbot.py would initialize this handler if directMode is True

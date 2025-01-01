@@ -1,5 +1,6 @@
 import signal
 import sys
+from src.game_connection.websocket_handler import WebSocketHandler
 from src.hint_system import HintSystem
 from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
@@ -23,6 +24,7 @@ class ConnectionManager:
     def __init__(self):
         self.twitch_connection = None 
         self.direct_connection = None
+        self.websocket_handler = None
         self.tasks = []
         self.task_manager = None
         self.voting_system = None
@@ -36,6 +38,9 @@ class ConnectionManager:
         self.email_system = email_system
         self.shop_system = shop_system
         self.hint_system = hint_system
+
+        # Always start WebSocket server
+        await self.start_websocket(config)
 
         try:
             if config['twitch']['enabled']:
@@ -51,11 +56,26 @@ class ConnectionManager:
             logger.error(f'Incorrect config entry in direct.cfg: {e}')
             logger.debug(traceback.format_exc())
 
+    async def start_websocket(self, config):
+        self.websocket_handler = WebSocketHandler(
+            config, self.email_system, self.shop_system, self.hint_system, self.voting_system
+        )
+        self.tasks.append(
+            asyncio.create_task(
+                self.task_manager.start_task(
+                    "websocket_server",
+                    self.websocket_handler.start
+                )
+            )
+        )
+
     async def start_twitch(self, config):
         self.twitch_connection = TwitchConnection(
             config, self.voting_system, self.email_system, 
             self.shop_system, self.hint_system
         )
+        if self.websocket_handler:
+            self.twitch_connection.set_websocket_handler(self.websocket_handler)
         self.tasks.append(
             asyncio.create_task(
                 self.task_manager.start_task(
@@ -69,6 +89,8 @@ class ConnectionManager:
         self.direct_connection = DirectModeHandler(
             config, self.email_system, self.shop_system, self.hint_system
         )
+        if self.websocket_handler:
+            self.direct_connection.set_websocket_handler(self.websocket_handler)
         self.tasks.append(
             asyncio.create_task(
                 self.task_manager.start_task(
@@ -83,6 +105,10 @@ class ConnectionManager:
         old_direct_enabled = self.direct_connection is not None
         new_twitch_enabled = new_config['twitch']['enabled']
         new_direct_enabled = new_config['direct']['enabled']
+
+        # Update WebSocket server
+        if self.websocket_handler:
+            await self.websocket_handler.update_config(new_config)
 
         # Handle Twitch connection changes
         if old_twitch_enabled != new_twitch_enabled:

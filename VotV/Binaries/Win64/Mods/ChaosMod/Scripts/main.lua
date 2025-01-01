@@ -604,60 +604,11 @@ local config = {
 
 -- Define file paths
 config.files = {
-    enable = base_path .. "listen/enable.txt",
-    emails_enable = base_path .. "listen/emails_enable.txt",
-    emails_master = base_path .. "emails_master.json",
-    hints_master = base_path .. "hints_master.json",
-    shops_master = base_path .. "shops_master.json",
-    direct_master = base_path .. "direct_master.json",
-    votes = base_path .. "listen/votes.txt",
-    voting_enabled = base_path .. "listen/voting_enabled.txt",
-    shopOpen = base_path .. "listen/shopOpen.txt"
+    enable = base_path .. "listen/enable.txt"
 }
-
--- Wipe master file contents if they exist
-if io.open(config.files.shops_master, "r") then
-    safeWriteToFile(config.files.shops_master, "[]")
-else
-    print("[ChaosMod] shops_master file does not exist")
-end
-
-if io.open(config.files.emails_master, "r") then
-    safeWriteToFile(config.files.emails_master, "[]")
-else
-    print("[ChaosMod] emails_master file does not exist")
-end
-
-if io.open(config.files.hints_master, "r") then
-    safeWriteToFile(config.files.hints_master, "[]")
-else
-    print("[ChaosMod] hints_master file does not exist")
-end
-
-if io.open(config.files.direct_master, "r") then
-    safeWriteToFile(config.files.direct_master, "[]")
-else
-    print("[ChaosMod] direct_master file does not exist")
-end
-
--- Wipe votes if the file exists
-if io.open(config.files.votes, "r") then
-    safeWriteToFile(config.files.votes, " ")
-else
-    print("[ChaosMod] votes file does not exist")
-end
-
--- Close shop if the file exists
-if io.open(config.files.shopOpen, "r") then
-    safeWriteToFile(config.files.shopOpen, "false")
-else
-    print("[ChaosMod] shopOpen file does not exist")
-end
 
 -- Remove enable and result files if they exist
 safeRemoveFile(config.files.enable)
-safeRemoveFile(config.files.emails_enable)
-safeRemoveFile(config.files.voting_enabled)
 
 local chaosEnabled = false
 local emailsEnabled = false
@@ -668,116 +619,6 @@ RegisterConsoleCommandHandler(("Chaos"), function(full, args)
     ExecuteCommand(command)
     return true
 end)
-
--- Function to process new emails
-local function processNewEmails()
-    local emails = readMasterFile(config.files.emails_master)
-    local processed = {}
-    for i, email in ipairs(emails) do
-        if not email.processed then
-            local emailHandler = FindFirstOf("emailHandler_C")
-            if not emailHandler:IsValid() then
-                local World = UEHelpers:GetWorld()
-                local emailHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/emailHandler.emailHandler_C")
-                emailHandler = World:SpawnActor(emailHandler_C, {}, {})
-            end
-            if emailHandler and emailHandler:IsValid() then
-                if email.user == "user" then
-                    local fullBody = email.body .. " - " .. email.twitch_user
-                    emailHandler:addTwitchEmail(FText(email.subject), FText(fullBody))
-                else
-                    emailHandler:addSpecificUserEmail(email.user, FText(email.subject), FText(email.body))
-                end
-            end
-            email.processed = true
-            processed[#processed + 1] = i
-        end
-    end
-    if #processed > 0 then
-        writeMasterFile(config.files.emails_master, emails)
-    end
-end
-
--- Function to process new shop orders
-local function processNewShopOrders()
-    local orders = readMasterFile(config.files.shops_master)
-    local processed = {}
-    for i, order in ipairs(orders) do
-        if not order.processed then
-            local shopHandler = FindFirstOf("shopOrderHandler_C")
-            if not shopHandler:IsValid() then
-                local World = UEHelpers:GetWorld()
-                local shopHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/shopOrderHandler.shopOrderHandler_C")
-                shopHandler = World:SpawnActor(shopHandler_C, {}, {})
-            end
-            if shopHandler and shopHandler:IsValid() then
-                if config.direct.enabled then
-                    shopHandler:placeOrder(FName(order.item), order.amount)
-                else
-                  shopHandler:placeOrderTwitch(FName(order.item), FText(order.username))
-                end
-            end
-            order.processed = true
-            processed[#processed + 1] = i
-        end
-    end
-    if #processed > 0 then
-        writeMasterFile(config.files.shops_master, orders)
-    end
-end
-
-local function processNewHints()
-    local hints = readMasterFile(config.files.hints_master)
-    local processed = {}
-    for i, hint in ipairs(hints) do
-        if not hint.processed then
-            local hintsHandler_C = FindFirstOf("hintsHandler_C")
-            if not hintsHandler_C:IsValid() then
-                local World = UEHelpers:GetWorld()
-                local hintsHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/hintsHandler.hintsHandler_C")
-                hintsHandler_C = World:SpawnActor(hintsHandler_C, {}, {})
-            end
-            if hintsHandler_C and hintsHandler_C:IsValid() then
-                hintsHandler_C:submitHint(hint.type, FText(hint.hint))
-            else 
-                print("[ChaosMod] Failed to find hintsHandler_C")
-            end
-            hint.processed = true
-            print("[ChaosMod] Processed hint: " .. hint.hint)
-            processed[#processed + 1] = i
-        end
-    end
-    if #processed > 0 then
-        writeMasterFile(config.files.hints_master, hints)
-    end
-end
-
-local function processNewDirects()
-    local directs = readMasterFile(config.files.direct_master)
-    local processed = {}
-    for i, direct in ipairs(directs) do
-        if not direct.processed then
-            local directHandler_C = FindFirstOf("directHandler_C")
-            if not directHandler_C:IsValid() then
-                local World = UEHelpers:GetWorld()
-                local directHandler_C = StaticFindObject("/Game/Mods/ChaosMod/Assets/Actors/Handlers/directHandler.directHandler_C")
-                directHandler_C = World:SpawnActor(directHandler_C, {}, {})
-            end
-            if directHandler_C and directHandler_C:IsValid() then
-                if direct.type == "trigger_chaos" then
-                    directHandler_C:runDirectCommand(direct.command)
-                elseif direct.type == "trigger_event" then
-                    directHandler_C:runDirectEvent(direct.command)
-                end
-            end
-            direct.processed = true
-            processed[#processed + 1] = i
-        end
-    end
-    if #processed > 0 then
-        writeMasterFile(config.files.direct_master, directs)
-    end
-end
 
 -- Toggle chaos mod
 local function toggleChaosMod()
@@ -886,15 +727,6 @@ RegisterKeyBind(Key.F6, function() clearEvents() end)
 if config.emails.enabled then
     RegisterKeyBind(Key.F3, function() toggleEmails() end)
 end
-
--- Main loop using loopasync
-LoopAsync(math.floor(1000 / 30), function()
-    processNewDirects()
-    processNewEmails()
-    processNewHints()
-    processNewShopOrders()
-    processNewShopOrders()
-end)
 
 LoopAsync(5000, function()
     config.direct = readConfig("cfg/direct.cfg")

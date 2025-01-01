@@ -1,7 +1,6 @@
 import logging
 import time
 import json
-import os
 import asyncio
 
 class EmailSystem:
@@ -10,12 +9,10 @@ class EmailSystem:
         self.emails_enabled = False
         self.email_cooldowns = {}
         self.email_cooldown_time = config['emails']['user_cooldown']
-        self.master_file = config['files']['emails_master']
         self.twitch_connection = None
         self.direct_connection = None
-
+        self.websocket_handler = None
         self.logger = logging.getLogger(__name__)
-
         self.valid_users = [
             "Dr_Bao",
             "Prof_Lea",
@@ -28,6 +25,9 @@ class EmailSystem:
             "user",
             "Dr_Noa"
         ]
+
+    def set_websocket_handler(self, websocket_handler):
+        self.websocket_handler = websocket_handler
 
     def set_twitch_connection(self, twitch_connection):
         self.twitch_connection = twitch_connection
@@ -42,9 +42,9 @@ class EmailSystem:
         if user not in self.valid_users and ctx is not None:
             await self.twitch_connection.reply(ctx, "Please use a valid user. e.g Dr_Bao, Dr_Ken...")
             return
-        
+
         if user not in self.valid_users and self.direct_connection is not None:
-            user="user"
+            user = "user"
 
         if ctx is not None:
             # Check if the user is on cooldown
@@ -54,50 +54,47 @@ class EmailSystem:
                     remaining_cooldown = int(self.email_cooldown_time - time_since_last_email)
                     cooldown_message = f"You're on cooldown. You can send another email in {remaining_cooldown} seconds."
                     await self.twitch_connection.reply(ctx, cooldown_message)
-                return
+                    return
 
-        # If not on cooldown, save the email and update the cooldown
-        self.save_email(twitch_user, subject, body, user)
+        # If not on cooldown, send the email through WebSocket
+        await self.send_email(twitch_user, subject, body, user)
+        
         if ctx is not None:
             self.email_cooldowns[twitch_user] = current_time
 
-    def save_email(self, twitch_user, subject, body, user="user"):
-        email_data = {
-            "user": user,
-            "twitch_user": twitch_user,
-            "subject": subject.strip(),
-            "body": body.strip(),
-            "timestamp": time.time(),
-            "processed": False
-        }
-        
-        emails = self.read_master_file()
-        emails.append(email_data)
-        self.write_master_file(emails)
-        
-        self.logger.debug(f"Email saved for {twitch_user}")
-
-    def read_master_file(self):
-        if os.path.exists(self.master_file):
-            with open(self.master_file, 'r') as f:
-                return json.load(f)
-        return []
-
-    def write_master_file(self, data):
-        with open(self.master_file, 'w') as f:
-            json.dump(data, f, indent=2)
+    async def send_email(self, twitch_user, subject, body, user="user"):
+        """Send email through WebSocket connection."""
+        if self.websocket_handler and self.websocket_handler.game_connection:
+            email_data = {
+                "type": "email",
+                "data": {
+                    "user": user,
+                    "twitch_user": twitch_user,
+                    "subject": subject.strip(),
+                    "body": body.strip(),
+                    "timestamp": time.time()
+                }
+            }
+            
+            try:
+                await self.websocket_handler.game_connection.send(json.dumps(email_data))
+                self.logger.debug(f"Email sent for {twitch_user}")
+            except Exception as e:
+                self.logger.error(f"Failed to send email through WebSocket: {e}")
+        else:
+            self.logger.error("WebSocket connection not available")
 
     def enable_emails(self):
         self.emails_enabled = True
-        print("Emails enabled")
-    
+        self.logger.info("Emails enabled")
+
     def disable_emails(self):
         self.emails_enabled = False
-        print("Emails disabled")
+        self.logger.info("Emails disabled")
 
     def are_emails_enabled(self):
         return self.emails_enabled
-    
+
     def update_config(self, config):
         self.config = config
         self.email_cooldown_time = config['emails']['user_cooldown']
@@ -106,6 +103,8 @@ class EmailSystem:
     def update(self):
         if self.twitch_connection is not None:
             self.emails_enabled = self.config.get('emails', {}).get('enabled', False)
+        
+        # Clean up expired cooldowns
         current_time = time.time()
         for twitch_user, cooldown_time in list(self.email_cooldowns.items()):
             if current_time - cooldown_time >= self.email_cooldown_time:
