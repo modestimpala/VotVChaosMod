@@ -347,6 +347,11 @@ function json_decode(str)
   return res
 end
 
+
+
+
+
+
 -- Function to load a command module
 function load_command_module(command_name)
     if not command_modules[command_name] then
@@ -375,68 +380,7 @@ function ExecuteCommand(commandName)
     end
 end
 
--- Function to safely write to a file
-function safeWriteToFile(filePath, content)
-    local file = io.open(filePath, "w")
-    if file then
-        file:write(content)
-        file:close()
-        print("[ChaosMod] Successfully wrote to " .. filePath)
-    else
-        print("[ChaosMod] Failed to open file for writing: " .. filePath)
-    end
-end
 
--- Function to safely remove a file
-function safeRemoveFile(filePath)
-    if os.remove(filePath) then
-        print("[ChaosMod] Successfully removed " .. filePath)
-    else
-        print("[ChaosMod] Failed to remove file (may not exist): " .. filePath)
-    end
-end
-
--- Function to read config files
-function readConfig(filename)
-    local config = {}
-    local file = io.open(base_path .. filename, "r")
-    if file then
-        for line in file:lines() do
-            local key, value = line:match("([^=]+)=(.+)")
-            if key and value then
-                key = key:gsub("%s+", "")
-                value = value:gsub("%s+", "")
-                if value == "true" then
-                    config[key] = true
-                elseif value == "false" then
-                    config[key] = false
-                elseif tonumber(value) then
-                    config[key] = tonumber(value)
-                else
-                    config[key] = value
-                end
-            end
-        end
-        file:close()
-    end
-    return config
-end
-
--- Function to read the master JSON file
-function readMasterFile(filepath)
-    local file = io.open(filepath, "r")
-    if not file then return {} end
-    local content = file:read("*all")
-    file:close()
-    return json_decode(content) or {}
-end
-
--- Function to write the master JSON file
-function writeMasterFile(filepath, data)
-    local file = io.open(filepath, "w")
-    file:write(json_encode(data))
-    file:close()
-end
 
 -- Function to download and extract ChaosBot
 function downloadAndExtractChaosBot(base_path)
@@ -592,107 +536,9 @@ function launchChaosBot()
     end
 end
 
--- Read configurations
-local config = {
-    chatShop = readConfig("cfg/chatShop.cfg"),
-    emails = readConfig("cfg/emails.cfg"),
-    twitch = readConfig("cfg/twitch.cfg"),
-    voting = readConfig("cfg/voting.cfg"),
-    hints = readConfig("cfg/hints.cfg"),
-    direct = readConfig("cfg/direct.cfg")
-}
 
--- Define file paths
-config.files = {
-    enable = base_path .. "listen/enable.txt"
-}
 
--- Remove enable and result files if they exist
-safeRemoveFile(config.files.enable)
 
-local chaosEnabled = false
-local emailsEnabled = false
-local isShopOpen = false
-
-RegisterConsoleCommandHandler(("Chaos"), function(full, args)
-    local command = args[1]
-    ExecuteCommand(command)
-    return true
-end)
-
--- Toggle chaos mod
-local function toggleChaosMod()
-    chaosEnabled = not chaosEnabled
-    ExecuteInGameThread(function()
-        local findConstructor = FindFirstOf("chaosConstructor_C")
-        local findWindow = FindFirstOf("votingMenu_C")
-        if chaosEnabled then
-            if not findConstructor:IsValid() and not findWindow:IsValid() then
-                local World = UEHelpers:GetWorld()
-                local obj = StaticFindObject("/Game/Mods/ChaosMod/Assets/Widgets/chaosConstructor.chaosConstructor_C")
-                local spawned = World:SpawnActor(obj, {}, {})
-            end
-
-            if findWindow:IsValid() then
-                findWindow:enableMenu()
-                -- findWindow:resetState()
-            end
-
-            local file = io.open(config.files.enable, "w")
-            file:write("true")
-            file:close()
-            print("[ChaosMod] ChaosMod enabled")
-        else
-            if findConstructor:IsValid() then
-                findConstructor:K2_DestroyActor()
-            end
-            local findWindow = FindFirstOf("votingMenu_C")
-            if findWindow:IsValid() then
-                findWindow:disableMenu()
-            end
-            os.remove(config.files.enable)
-            print("[ChaosMod] ChaosMod disabled")
-        end
-    end)
-end
-
-local function disableChaosMod()
-    chaosEnabled = false
-    ExecuteInGameThread(function()
-        local findConstructor = FindFirstOf("chaosConstructor_C")
-        local findWindow = FindFirstOf("votingMenu_C")
-        if findConstructor:IsValid() then
-            findConstructor:K2_DestroyActor()
-        end
-        if findWindow:IsValid() then
-            findWindow:disableMenu()
-        end
-    end)
-    os.remove(config.files.enable)
-    print("[ChaosMod] ChaosMod disabled")
-end
-
--- Manually trigger voting
-local function triggerVoting()
-    if chaosEnabled then
-        local findWindow = FindFirstOf("votingMenu_C")
-        if findWindow:IsValid() then
-            ExecuteInGameThread(function()
-                findWindow:startVote()
-            end)
-        end
-    end
-end
-
--- Clear events
-local function clearEvents()
-    local mainGamemode_C = FindFirstOf("mainGamemode_C")
-    if mainGamemode_C:IsValid() then
-        ExecuteInGameThread(function()
-            mainGamemode_C.eventsActive:Empty()
-        end)
-    end
-end
 
 -- Console Commands
 RegisterConsoleCommandHandler(("launchChaosBot"), function(full, args)
@@ -700,51 +546,13 @@ RegisterConsoleCommandHandler(("launchChaosBot"), function(full, args)
     return true
 end)
 
-RegisterConsoleCommandHandler(("clearEvents"), function(full, args)
-    clearEvents()
-    return true
-end)
 
-RegisterConsoleCommandHandler(("toggleChaosMod"), function(full, args)
-    toggleChaosMod()
-    return true
-end)
 
-RegisterConsoleCommandHandler(("disableChaosMod"), function(full, args)
-    disableChaosMod()
-    return true
-end)
-
-RegisterConsoleCommandHandler(("triggerVote"), function(full, args)
-    triggerVoting()
-    return true
-end)
-
--- Keybind hooks
-RegisterKeyBind(Key.F8, function() toggleChaosMod() end)
-RegisterKeyBind(Key.F7, function() triggerVoting() end)
-RegisterKeyBind(Key.F6, function() clearEvents() end)
-if config.emails.enabled then
-    RegisterKeyBind(Key.F3, function() toggleEmails() end)
-end
-
-LoopAsync(5000, function()
-    config.direct = readConfig("cfg/direct.cfg")
-    config.twitch = readConfig("cfg/twitch.cfg")
-end)
-
-LoopAsync(2500, function()
-    ExecuteInGameThread(function()
-        local findWidget = FindFirstOf("votingMenu_C")
-        if findWidget:IsValid() then
-            if not findWidget:IsInViewport() and chaosEnabled then
-                disableChaosMod()
-            end
-        end
-    end)
-end)
 
 print("[ChaosMod] Successfully loaded ChaosMod")
+
+
+
 
 
 -- Moddy 2024
