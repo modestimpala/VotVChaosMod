@@ -1,4 +1,11 @@
-# 3.1.0
+# 3.1.1 
+- Updated to latest game version pa0082_0011
+- Fixed Pyramic Time command (I swear)
+- Removed Madness Combat command
+- Converted more Lua commands to Blueprints for stability
+- Updated list_store
+
+# 3.1.0 (UP TO pa0081_0008)
 
 ### Changed
 - Migrated away from "listen" text/json files for game communication to WebSocket server. Mod no longer supports 0.7. 
