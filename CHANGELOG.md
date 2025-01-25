@@ -1,5 +1,10 @@
+# 3.1.2
+- Updated to latest game version 0.8.2 pre-alpha 
+- Fixed Config menu Focus issue
+- Fixed ChaosBot psutil dep bug
+
 # 3.1.1 
-- Updated to latest game version pa0082_0011
+- Updated to latest game version pa0082_0011 (Test version, no longer available on twitch.io)
 - Fixed Pyramic Time command (I swear)
 - Removed Madness Combat command
 - Converted more Lua commands to Blueprints for stability
