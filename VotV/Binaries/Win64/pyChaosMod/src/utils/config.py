@@ -80,7 +80,7 @@ class AsyncConfigManager:
         if not os.path.exists(config['files']['commands']):
             config['files']['commands'] = os.path.join(self.base_path, 'twitchChannelPoints.cfg')
             
-        config['version'] = '3.1.1'
+        config['version'] = '3.1.2'
         self.config = config
         return config
 
