@@ -1,0 +1,1 @@
+pyinstaller --onefile --add-data "list_store.txt;." --icon=chaosIcon.ico --clean --name "ChaosBot" ChaosBot.py
