@@ -87,12 +87,21 @@ class WebSocketHandler:
             command_type (str): The type of the command.
             command (str): The command to be processed.
         """
-        direct = {
-            "type": command_type,
-            "command": command,
-            "timestamp": time.time(),
-        }
-        await self.game_connection.send(json.dumps(direct))
+        if not self.game_connection:
+            logger.error("Cannot process command: Game is not connected")
+            return
+            
+        try:
+            direct = {
+                "type": command_type,
+                "command": command,
+                "timestamp": time.time(),
+            }
+            await self.game_connection.send(json.dumps(direct))
+        except Exception as e:
+            logger.error(f"Failed to send command to game: {str(e)}")
+            # Reset game_connection if we can't send to it
+            self.game_connection = None
 
     async def start(self):
         """Start the WebSocket server."""
