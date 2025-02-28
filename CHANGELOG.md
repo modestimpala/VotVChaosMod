@@ -1,3 +1,11 @@
+# 3.1.5
+- Fixed Lua command errors
+- Changed WS hints to only send if debug enabled
+
+# 3.1.3
+- Updated to game version pa0082b_0004
+- Enhanced websocketHandler AddHint debug output
+
 # 3.1.2
 - Updated to latest game version 0.8.2 pre-alpha 
 - Fixed Config menu Focus issue
