@@ -538,7 +538,11 @@ end
 
 
 
-
+RegisterConsoleCommandHandler(("Chaos"), function(full, args)
+    local command = args[1]
+    ExecuteCommand(command)
+    return true
+end)
 
 -- Console Commands
 RegisterConsoleCommandHandler(("launchChaosBot"), function(full, args)
