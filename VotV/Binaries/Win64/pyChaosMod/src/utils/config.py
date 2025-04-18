@@ -9,6 +9,13 @@ from functools import partial
 
 logger = logging.getLogger(__name__)
 
+class NoSpacesConfigParser(configparser.ConfigParser):
+    def write(self, fp, space_around_delimiters=False):
+        """Write an .ini-format representation of the configuration state."""
+        # Override the default behavior by setting space_around_delimiters=False
+        super().write(fp, space_around_delimiters=False)
+
+
 class AsyncConfigManager:
     def __init__(self):
         self.config: Dict[str, Any] = {}
@@ -17,6 +24,33 @@ class AsyncConfigManager:
         self._change_callbacks: List[Callable] = []
         self._shutdown_event = asyncio.Event()
         self._loop = asyncio.get_event_loop()
+        self._config_files = {
+            'chatShop': 'chatShop.cfg',
+            'emails': 'emails.cfg',
+            'twitch': 'twitch.cfg',
+            'voting': 'voting.cfg',
+            'direct': 'direct.cfg',
+            'hints': 'hints.cfg',
+            'misc': 'misc.cfg',
+        }
+        self._config_parsers = {}  # Store parsers to maintain file structure
+        
+    # Dictionary-like access methods
+    def __getitem__(self, key):
+        """Allow dictionary-like access to config sections: config['section']"""
+        return self.config[key]
+        
+    def __setitem__(self, key, value):
+        """Allow dictionary-like setting of config sections: config['section'] = {...}"""
+        self.config[key] = value
+        
+    def __contains__(self, key):
+        """Support 'in' operator: 'section' in config"""
+        return key in self.config
+        
+    def get(self, key, default=None):
+        """Mimic dict.get() method"""
+        return self.config.get(key, default)
         
     def _find_base_path(self) -> str:
         if os.path.exists('./listen') or os.path.exists('./cfg'):
@@ -31,22 +65,13 @@ class AsyncConfigManager:
 
     def load_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {}
-        config_files = {
-            'chatShop': 'chatShop.cfg',
-            'emails': 'emails.cfg',
-            'twitch': 'twitch.cfg',
-            'voting': 'voting.cfg',
-            'direct': 'direct.cfg',
-            'hints': 'hints.cfg',
-            'misc': 'misc.cfg',
-        }
         
         base_path_listen = os.path.join(self.base_path, 'listen')
         base_path_cfg = os.path.join(self.base_path, 'cfg')
         
-        for section, filename in config_files.items():
+        for section, filename in self._config_files.items():
             config_path = os.path.join(base_path_cfg, filename)
-            parser = configparser.ConfigParser()
+            parser = NoSpacesConfigParser()
             
             if not os.path.exists(config_path):
                 alt_config_path = os.path.join('./cfg', filename)
@@ -59,6 +84,10 @@ class AsyncConfigManager:
                     )
             
             parser.read(config_path)
+            self._config_parsers[section] = {
+                'parser': parser,
+                'path': config_path
+            }
             
             config[section] = {}
             for section_name in parser.sections():
@@ -79,24 +108,108 @@ class AsyncConfigManager:
         
         if not os.path.exists(config['files']['commands']):
             config['files']['commands'] = os.path.join(self.base_path, 'twitchChannelPoints.cfg')
-            
-            
-            
+                       
         # VERSION
         config['version'] = '3.1.22'
         # VERSION
         
-        
         self.config = config
         return config
+
+    def update_config_value(self, section: str, key: str, value: Any) -> bool:
+        """
+        Update a configuration value in memory
+        
+        Args:
+            section: The section name in the config
+            key: The key to update
+            value: The new value
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if section not in self.config:
+            logger.error(f"Section {section} not found in config")
+            return False
+            
+        self.config[section][key] = value
+        return True
+        
+    def save_config(self, section: str = None) -> bool:
+        """
+        Save the configuration to the file system
+        
+        Args:
+            section: Optional section to save. If None, saves all sections
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            if section is not None:
+                return self._save_section(section)
+                
+            # Save all sections
+            success = True
+            for section_name in self._config_parsers:
+                if not self._save_section(section_name):
+                    success = False
+            return success
+        except Exception as e:
+            logger.error(f"Error saving configuration: {e}")
+            return False
+            
+    def _save_section(self, section: str) -> bool:
+        """
+        Save a specific section to its config file
+        
+        Args:
+            section: The section to save
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if section not in self._config_parsers:
+            logger.error(f"No parser found for section {section}")
+            return False
+            
+        parser_info = self._config_parsers[section]
+        parser = parser_info['parser']
+        path = parser_info['path']
+        
+        # Update parser with current values
+        for section_name in parser.sections():
+            for key, value in parser.items(section_name):
+                if key in self.config[section]:
+                    # Convert Python types back to string for configparser
+                    new_value = self.config[section][key]
+                    if isinstance(new_value, bool):
+                        new_value = 'true' if new_value else 'false'
+                    parser.set(section_name, key, str(new_value))
+        
+        # Write to file
+        try:
+            with open(path, 'w') as configfile:
+                parser.write(configfile)
+            logger.info(f"Config section {section} saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error writing config file {path}: {e}")
+            return False
 
     class ConfigFileHandler(FileSystemEventHandler):
         def __init__(self, config_manager):
             self.config_manager = config_manager
             self.last_modified_times: Dict[str, float] = {}
+            self._is_our_write = False
             
         def on_modified(self, event):
             if not event.is_directory and event.src_path.endswith('.cfg'):
+                # Skip if this is our own write operation
+                if self._is_our_write:
+                    self._is_our_write = False
+                    return
+                    
                 current_time = os.path.getmtime(event.src_path)
                 last_time = self.last_modified_times.get(event.src_path, 0)
                 
@@ -105,6 +218,10 @@ class AsyncConfigManager:
                     self.config_manager._loop.call_soon_threadsafe(
                         self.config_manager._handle_config_change
                     )
+        
+        def mark_our_write(self):
+            """Mark that the next file change is from our own write operation"""
+            self._is_our_write = True
 
     def _handle_config_change(self):
         try:
@@ -120,6 +237,7 @@ class AsyncConfigManager:
     async def start(self) -> None:
         self.observer = Observer()
         handler = self.ConfigFileHandler(self)
+        self._file_handler = handler  # Store reference to handler
         
         cfg_paths = [
             os.path.join(self.base_path, 'cfg')
@@ -150,3 +268,25 @@ async def create_config_manager() -> AsyncConfigManager:
     manager.load_config()
     asyncio.create_task(manager.start())
     return manager
+
+# Usage example:
+# async def main():
+#     config = await create_config_manager()
+#     
+#     # Getting config values - direct dictionary-like access
+#     twitch_enabled = config['twitch'].get('enabled', False)
+#     
+#     # Checking if a section exists
+#     if 'misc' in config:
+#         print("Misc section exists")
+#     
+#     # Updating config values
+#     config.update_config_value('twitch', 'enabled', True)
+#     
+#     # Save to disk
+#     config.save_config('twitch')  # Save just twitch section
+#     # or
+#     config.save_config()  # Save all sections
+#     
+# if __name__ == "__main__":
+#     asyncio.run(main())
