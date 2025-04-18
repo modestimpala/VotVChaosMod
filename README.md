@@ -13,15 +13,13 @@
   
 Chaos Mod is an interactive mod that allows Twitch chat to vote on various in-game effects, send emails and shop for items! Experience Chaos with 100 different commands to vote for!
 
-Version 3.1.0: Changed game communication to WebSocket for better reliability (drops 0.7 support) and added a queue system to Chat Shop that processes orders faster when busy.
+The mod features full Channel Points integration that lets viewers redeem custom rewards for Chaos Commands, emails, shop items, and hints. These rewards can be configured individually and run alongside regular Twitch voting.
 
-Version 3.0.0 introduces a full Channel Points integration that lets viewers redeem custom rewards for Chaos Commands, emails, shop items, and hints. These rewards can be configured individually and run alongside regular Twitch voting.
+It also features a Direct Mode with an Online Control Panel that runs alongside Twitch Integration. When enabled, it allows sending specific commands directly to players through a web interface.
 
-A brand new Direct Mode with an Online Control Panel has been added that runs alongside Twitch Integration. When enabled, it allows sending specific commands directly to players through a web interface.
+Version 3.2.0 has reworked ChaosBot to switch to a new Python Twitch API. This transition was due to Twitch's PubSub deprication, and as such, you now must follow the new Web OAuth instructions below to utilize ChaosBot. Ultimately, it should be easier for users since it will automatically request needed auth scopes.
 
-Each system now runs in "Always On" mode and reloaded/toggled dynamically through the a new dynamic config reloader. The email and shop systems were reworked with improved parsing and verification, a new Small Menu was added to display Chaos status, and 26 Lua scripts were moved to Blueprints for better stability.
-
-See changelog for specific changes.
+Please see changelog for specific changes.
 
 ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button automatically downloads and runs a pre-built exe making installation a breeze. If you still want to run from source, it can automatically launch the python file for you. 
 
@@ -48,7 +46,6 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 
 - Stylish In-game UI to display votes and ChaosMod status
 
-  
 
 ## Community
 
@@ -59,63 +56,78 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 
 ## Automatic r2modman Setup
 
-    
-
 1. Install ChaosMod and unreal-shimloader
 
+2. Follow [Twitch's instructions to register an Application in the Twitch Dev Console](https://dev.twitch.tv/docs/authentication/register-app/)
+    - When registering your Application, be sure to set your **OAuth Redirect URL** to ``http://localhost:17563``. This is neccessary for automatic Web OAuth.
+    - Name and Category can be whatever you'd prefer. Example: VotVChaosBotModdy. Category: Game Integration.
+    - Your Application should be **Confidential**.
 
-2. Get an OAuth bot token from https://twitchtokengenerator.com/ --- Channel Points / Chat OAuth Quick Link: https://twitchtokengenerator.com/quick/76EdtsccRT
+3. Once your Application is registered, click the **Manage** button from [Dev Console](https://dev.twitch.tv/console/apps).
+    - Make note of your **Client ID**.
+    - Under **"Client Secret"** click **New Secret**
+    - Make note of your Client Secret. **Do not share these values** - you must keep them confidential. 
 
+4. Launch the game with ChaosMod installed and click Chaos Settings on the Main Menu.
+    - Under "Twitch Settings" enter the following:
+      - Your desired Twitch Channel
+      - Your Client ID
+      - Your Client Secret
+    - Adjust any other settings as needed.
 
-3. Launch the game and configure settings from main menu
+5. Click Save.
 
-
-4. Launch the ChaosBot from main menu, which will automatically download and extract a pre-built exe, then run it.
+6. Launch the ChaosBot from main menu, which will automatically download and extract a pre-built exe, then run it.
 
 If you want to download the exe manually, or run from source, see below.
   
 
 ## Manual r2modman Setup
 
-  
-
 1. Install ChaosMod and unreal-shimloader
   
-
 2. Download [ChaosBot.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/ChaosBot.zip) from GitHub releases
-    - Optionally, download python source [src_pyChaosMod.zip](https://github.com/modestimpala/VotVChaosMod/releases/download/latest/src_pyChaosMod.zip)
+    - Optionally, download python source [from GitHub repo](https://github.com/modestimpala/VotVChaosMod/)
 
 3. Navigate to modded game directory, pa08_00**\WindowsNoEditor\VotV\Binaries\Win64\
 
-
 4. Place ChaosBot.exe in a folder called "pyChaosMod" inside Win64 folder 
     - Optionally, extract python source into Win64 folder
-    - Python source requires psutil package (pip install psutil)
+    - pip install to install from requirements.txt
 
+5. Follow [Twitch's instructions to register an Application in the Twitch Dev Console](https://dev.twitch.tv/docs/authentication/register-app/)
+    - When registering your Application, be sure to set your **OAuth Redirect URL** to ``http://localhost:17563``. This is neccessary for automatic Web OAuth.
+    - Name and Category can be whatever you'd prefer. Example: VotVChaosBotModdy. Category: Game Integration.
+    - Your Application should be **Confidential**.
 
-5. Get an OAuth bot token from https://twitchtokengenerator.com/ --- Channel Points / Chat OAuth Quick Link: https://twitchtokengenerator.com/quick/76EdtsccRT
+6. Once your Application is registered, click the **Manage** button from [Dev Console](https://dev.twitch.tv/console/apps).
+    - Make note of your **Client ID**.
+    - Under **"Client Secret"** click **New Secret**
+    - Make note of your Client Secret. **Do not share these values** - you must keep them confidential. 
 
+7. Launch the game with ChaosMod installed and click Chaos Settings on the Main Menu.
+    - Under "Twitch Settings" enter the following:
+      - Your desired Twitch Channel
+      - Your Client ID
+      - Your Client Secret
+    - Adjust any other settings as needed.
 
-6. Launch the game and configure settings from main menu
+8. Click Save.
 
-
-7. Launch the ChaosBot from main menu, which will automatically run in order priority: ChaosBot.exe, python Chaosbot.py 
-    - Optionally, run the programs from pyChaosMod folder
+9. Launch the ChaosBot from main menu, which will automatically run in order priority: ChaosBot.exe, python Chaosbot.py 
+    - Optionally, run the program from pyChaosMod folder
 
 Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* for proper functionality 
 
 
 ## Configuration
 
-  
-  Use in-game configuration menu to change settings and set Twitch connection info.
+Use in-game configuration menu to change settings and set Twitch connection info.
 
-  
 
 ## Usage
 
   
-
 1. Start your game with mods enabled, through r2modman or manual setup.
 
 
@@ -123,7 +135,7 @@ Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* f
     - Optionally, launch exe or .py file manually from pyChaosMod folder
 
 
-3. Either pause the game or open inventory to see buttons to toggle the mod and other functions
+3. Either pause the game or open inventory to see buttons to toggle the mod and other functions (bottom right)
 
     Optional In-game keybinds:
 
@@ -135,16 +147,11 @@ Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* f
 
       - F3: Toggle email system (if enabled)
 
-  
-
 4. Twitch viewers can vote using numbers in chat during voting periods.
-
-  
 
 5. If enabled, viewers can use the `!email` command to send in-game emails.
     - Format: !email subject:[subject] body:[body]
   
-
 6. If the shop system is enabled, viewers can use the `!shop` command to place orders when the shop is open. This will deduct Points if enabled.
     - [Shop items list](https://github.com/modestimpala/VotVChaosMod/blob/main/list_store.txt)
   
