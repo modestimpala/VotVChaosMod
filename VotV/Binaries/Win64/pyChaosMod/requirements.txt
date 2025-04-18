@@ -1,8 +1,8 @@
-aiohttp==3.10.10
-psutil==6.0.0
-psutil==6.1.0
+psutil==7.0.0
 Requests==2.32.3
-textual==0.86.3
-twitchio==2.10.0
+twitchio==3.0.0b4
 watchdog==6.0.0
-websockets==13.1
+websockets==15.0.1
+colorama~=0.4.6
+asqlite~=2.0.0
+twitchAPI~=4.4.0
