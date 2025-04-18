@@ -1,3 +1,7 @@
+# 3.2.0
+- Reworked ChaosBot to use TwitchAPI Python Library due to PubSub deprication
+- Updated Config, Readme, etc for new OAuth. 
+
 # 3.1.5
 - Fixed Lua command errors
 - Changed WS hints to only send if debug enabled
