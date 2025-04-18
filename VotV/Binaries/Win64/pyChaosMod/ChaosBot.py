@@ -1,5 +1,8 @@
 import signal
 import sys
+from typing import Optional
+
+import asqlite
 from src.game_connection.websocket_handler import WebSocketHandler
 from src.hint_system import HintSystem
 from src.twitch.twitch_connection import TwitchConnection
@@ -21,24 +24,26 @@ logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
-    def __init__(self):
-        self.twitch_connection = None 
-        self.direct_connection = None
-        self.websocket_handler = None
-        self.tasks = []
-        self.task_manager = None
-        self.voting_system = None
-        self.email_system = None
-        self.shop_system = None
-        self.hint_system = None
-
-    async def start_connections(self, config, task_manager, voting_system, email_system, shop_system, hint_system):
+    def __init__(
+        self,
+        task_manager: TaskManager,
+        voting_system: VotingSystem,
+        email_system: EmailSystem,
+        shop_system: ShopSystem,
+        hint_system: HintSystem
+    ):
         self.task_manager = task_manager
         self.voting_system = voting_system
         self.email_system = email_system
         self.shop_system = shop_system
         self.hint_system = hint_system
+        
+        self.twitch_connection = None
+        self.direct_connection = None
+        self.websocket_handler = None
+        self.tasks = []
 
+    async def initialize(self, config):
         # Always start WebSocket server
         await self.start_websocket(config)
 
@@ -70,12 +75,20 @@ class ConnectionManager:
         )
 
     async def start_twitch(self, config):
+        # Create the TwitchConnection instance
         self.twitch_connection = TwitchConnection(
-            config, self.voting_system, self.email_system, 
-            self.shop_system, self.hint_system
+            config,
+            self.voting_system,
+            self.email_system,
+            self.shop_system,
+            self.hint_system
         )
+
+        # Set the websocket handler if available
         if self.websocket_handler:
             self.twitch_connection.set_websocket_handler(self.websocket_handler)
+
+        # Add the task to the task manager
         self.tasks.append(
             asyncio.create_task(
                 self.task_manager.start_task(
@@ -143,7 +156,7 @@ async def main():
         
         # Create and start config manager
         config_manager = await create_config_manager()
-        config = config_manager.config
+        config = config_manager
         
         # Check for updates if enabled
         if config["misc"]["auto_bot_update"]:
@@ -168,7 +181,6 @@ async def main():
         shop_system = ShopSystem(config)
         hint_system = HintSystem(config)
         voting_system = VotingSystem(config)
-        connection_manager = ConnectionManager()
 
         # Register systems for config updates
         def update_systems(new_config):
@@ -187,18 +199,23 @@ async def main():
         
         def signal_handler(sig, frame):
             logger.info(f"Received signal {sig}")
+            # Just set the event and return immediately
             shutdown_event.set()
-
+            
         # Set up signal handlers
         for sig in (signal.SIGINT, signal.SIGTERM):
             signal.signal(sig, signal_handler)
 
         try:
             # Start connections
-            await connection_manager.start_connections(
-                config, task_manager, voting_system, email_system, shop_system, hint_system
+            connection_manager = ConnectionManager(
+                task_manager=task_manager,
+                voting_system=voting_system,
+                email_system=email_system,
+                shop_system=shop_system,
+                hint_system=hint_system
             )
-
+            await connection_manager.initialize(config)
             # Wait for shutdown signal
             await shutdown_event.wait()
             
@@ -211,8 +228,6 @@ async def main():
             await task_manager.stop_all()
             logger.info("ChaosBot shutdown complete")
     except Exception as e:
-        logger.error(f"An error occurred in main: {e}")
-        logger.error("Full traceback:")
         traceback.print_exc()
 
 if __name__ == "__main__":
