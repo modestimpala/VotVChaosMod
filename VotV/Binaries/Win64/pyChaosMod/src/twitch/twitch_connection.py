@@ -188,10 +188,6 @@ class TwitchConnection(ChannelPointsMixin):
         self.logger.info("ChaosBot is now running...")
         self.logger.info("Use Ctrl+C to stop the bot gracefully.")
 
-        if self.is_channel_points_enabled():
-            self.logger.info(
-                "Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
-
     async def on_message(self, msg: ChatMessage):
         """Handler for chat messages."""
         # Process potential vote
@@ -292,6 +288,12 @@ class TwitchConnection(ChannelPointsMixin):
                 self.message_queue.task_done()
             except asyncio.TimeoutError:
                 pass  # This allows the loop to check should_run regularly
+            except asyncio.CancelledError:
+                # Handle cancellation properly
+                self.logger.info("Message queue processing cancelled")
+                break
+            except Exception as e:
+                self.logger.error(f"Error processing message queue: {e}")
 
     async def queue_message(self, message):
         """Queue a message to be sent."""
@@ -299,6 +301,11 @@ class TwitchConnection(ChannelPointsMixin):
         await self.message_queue.put(message)
 
     async def send_message(self, message):
+        if message is None:
+            return
+        if not isinstance(message, str):
+            self.logger.error(f"Invalid message type: {type(message)}. Expected str.")
+            return
         """Send a message to the Twitch chat."""
         self.logger.debug(f"Sending message: {message}")
         if self.chat and self.chat.is_ready():
@@ -362,6 +369,13 @@ class TwitchConnection(ChannelPointsMixin):
         """Clean up and close connections."""
         self.logger.info("Test Closing Twitch Connection...")
         self.should_run = False
+
+        try:
+            # Put a sentinel value to wake up any waiting get() operations
+            self.message_queue.put_nowait(None)
+        except asyncio.QueueFull:
+            pass
+
 
         # Remove channel point rewards if enabled
         if self.is_channel_points_enabled():
