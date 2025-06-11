@@ -17,7 +17,7 @@ The mod features full Channel Points integration that lets viewers redeem custom
 
 It also features a Direct Mode with an Online Control Panel that runs alongside Twitch Integration. When enabled, it allows sending specific commands directly to players through a web interface.
 
-Version 3.2.0 has reworked ChaosBot to switch to a new Python Twitch API. This transition was due to Twitch's PubSub deprication, and as such, you now must follow the new Web OAuth instructions below to utilize ChaosBot. Ultimately, it should be easier for users since it will automatically request needed auth scopes.
+Version 3.3.0 introduces an OBS Browser Overlay system, allowing streamers to display real-time voting information directly in their streams. The webserver runs locally at http://localhost:3202/ and integrates seamlessly with OBS Browser Sources. Additionally, this version includes "The Big Red Button" prop, a complete Nextbot AI rework, two new Nextbots, and various Chaos related tweaks.
 
 Please see changelog for specific changes.
 
@@ -45,6 +45,8 @@ ChaosMod has automatic installation for the Twitch ChaosBot. A main menu button 
 - Email, Hint, and Shop system for viewer interaction - users can send emails to the in-game computer, order items from the shop and send hints of specific types
 
 - Stylish In-game UI to display votes and ChaosMod status
+
+- New OBS Browser Overlay system to display real-time voting, for users who wish to be completely surprised by the Chaos!
 
 
 ## Community
@@ -124,6 +126,22 @@ Folder structure WindowsNoEditor\VotV\Binaries\Win64\pyChaosMod is *essential* f
 
 Use in-game configuration menu to change settings and set Twitch connection info.
 
+## OBS Overlay
+
+The OBS Overlay runs alongside ChaosBot at http://localhost:3202/
+
+Simply add this to your active OBS scene and configure ChaosBot/CSS as needed.
+
+The CSS stylesheet can be edited at VotV/Binaries/Win64/pyChaosMod/cfg/styles.css
+and the local webserver port can be adjusted with cfg/overlay.cfg
+
+```
+[overlay]
+; Port for the overlay web server
+port=3202
+```
+
+Use the in-game configuration menu to disable the visibility of the regular Voting Menu and optionally disable hints under Misc. for an incognito chaos stream!
 
 ## Usage
 
@@ -162,10 +180,10 @@ Use in-game configuration menu to change settings and set Twitch connection info
 
 <a href="https://www.youtube.com/watch?v=0nfU4AxEBnE"><img src="https://img.youtube.com/vi/0nfU4AxEBnE/hqdefault.jpg"></a>
 
-![image](https://github.com/user-attachments/assets/7d0ec698-d2c9-4774-989c-850344bb03f4) ![image](https://github.com/user-attachments/assets/981ed31e-2923-4a90-9d96-f2166d46d643)
+![image](https://github.com/user-attachments/assets/981ed31e-2923-4a90-9d96-f2166d46d643)
 
+![image](https://github.com/user-attachments/assets/7d0ec698-d2c9-4774-989c-850344bb03f4) 
 
-![image](https://github.com/user-attachments/assets/f10e6374-b36c-440b-92c9-1c3cd57a16ae)
 
 
 https://github.com/user-attachments/assets/4adc4bad-de7b-4fab-8a11-432bc1a9cb42

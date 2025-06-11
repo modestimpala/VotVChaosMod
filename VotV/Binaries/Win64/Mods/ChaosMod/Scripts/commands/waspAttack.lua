@@ -9,7 +9,7 @@ return {
         local Rotation = Pawn:K2_GetActorRotation()
         local World = Pawn:GetWorld()
         local i = 0
-        for i = 0, 30 do
+        for i = 0, 10 do
             local obj = World:SpawnActor(obj_C, Location, Rotation, false, nil, nil, false, false)
             obj.LifeSpan = 10
             obj:ReceiveBeginPlay()

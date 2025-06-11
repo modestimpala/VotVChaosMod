@@ -1,3 +1,20 @@
+# 3.3.0
+- Added OBS Browser Overlay
+  - The webserver runs locally and updates with voting information in real-time
+  - Access from http://localhost:3202/ or add an OBS Browser Source and point it to http://localhost:3202/
+  - Default stylized to match VotV, but can edit cfg/styles.css to user preference 
+- Added The Big Red Button
+  - ChaosMod prop that runs Random Events or Chaos Effects when pressed
+  - Presser beware...
+- Modified several commands
+  - pyramidTime (again), Smoke500Cigs, Nextbots, waspAttack
+- Full Nextbot Rework with new AI
+  - They are pretty ruthless now *shrugs*
+- Added 2 new Nextbots
+- ChaosBot improvements
+- Added additional voting related hint/visibility settings
+- Removed OhFiddlesticks command
+
 # 3.2.0
 - Reworked ChaosBot to use TwitchAPI Python Library due to PubSub deprication
 - Updated Config, Readme, etc for new OAuth. 

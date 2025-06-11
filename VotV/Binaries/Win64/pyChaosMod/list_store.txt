@@ -340,3 +340,9 @@ cleanjar
 sugar
 flashlight_c
 mittens
+printer_d
+cardbbox
+smokedetec
+kerfoout_maid
+bandage
+charhat
