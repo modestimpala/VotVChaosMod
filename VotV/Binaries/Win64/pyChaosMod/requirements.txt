@@ -1,8 +1,6 @@
 psutil==7.0.0
 Requests==2.32.3
-twitchio==3.0.0b4
 watchdog==6.0.0
 websockets==15.0.1
 colorama~=0.4.6
-asqlite~=2.0.0
 twitchAPI~=4.4.0
