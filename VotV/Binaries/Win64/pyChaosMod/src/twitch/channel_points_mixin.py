@@ -189,6 +189,9 @@ class ChannelPointsMixin:
             if cmd['isEnabledForPoints']:
                 await self.create_custom_reward(cmd)
 
+        self.logger.warning(
+                "Channel points are enabled. You must use Ctrl+C to stop the bot to remove rewards properly.")
+
     async def create_special_system_rewards(self):
         """Create rewards for special system commands (Email, Shop, Hints)."""
         special_systems = [
