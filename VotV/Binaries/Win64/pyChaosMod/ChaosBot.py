@@ -9,6 +9,7 @@ from src.twitch.twitch_connection import TwitchConnection
 from src.voting_system import VotingSystem
 from src.email_system import EmailSystem
 from src.shop_system import ShopSystem
+from src.overlay.overlay_server import OverlayServer  # New import
 from src.utils.config import create_config_manager
 import asyncio
 import traceback
@@ -41,11 +42,15 @@ class ConnectionManager:
         self.twitch_connection = None
         self.direct_connection = None
         self.websocket_handler = None
+        self.overlay_server = None  # OBS overlay server
         self.tasks = []
 
     async def initialize(self, config):
         # Always start WebSocket server
         await self.start_websocket(config)
+        
+        # Start overlay server
+        await self.start_overlay(config)
 
         try:
             if config['twitch']['enabled']:
@@ -70,6 +75,22 @@ class ConnectionManager:
                 self.task_manager.start_task(
                     "websocket_server",
                     self.websocket_handler.start
+                )
+            )
+        )
+
+    async def start_overlay(self, config):
+        """Start the overlay server."""
+        self.overlay_server = OverlayServer(config, self.voting_system)
+        
+        # Set the overlay server reference in voting system
+        self.voting_system.set_overlay_server(self.overlay_server)
+        
+        self.tasks.append(
+            asyncio.create_task(
+                self.task_manager.start_task(
+                    "overlay_server",
+                    self.overlay_server.start
                 )
             )
         )
@@ -122,6 +143,10 @@ class ConnectionManager:
         # Update WebSocket server
         if self.websocket_handler:
             await self.websocket_handler.update_config(new_config)
+            
+        # Update overlay server
+        if self.overlay_server:
+            await self.overlay_server.update_config(new_config)
 
         # Handle Twitch connection changes
         if old_twitch_enabled != new_twitch_enabled:
