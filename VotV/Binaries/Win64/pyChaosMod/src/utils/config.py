@@ -144,7 +144,7 @@ class AsyncConfigManager:
             config['files']['commands'] = os.path.join(self.base_path, 'twitchChannelPoints.cfg')
                        
         # VERSION
-        config['version'] = '3.2.0'
+        config['version'] = '3.3.0'
         # VERSION
         
         self.config = config

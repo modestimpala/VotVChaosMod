@@ -4,6 +4,7 @@ VotV/Binaries/Win64/pyChaosMod/build/*
 VotV/Binaries/Win64/pyChaosMod/dist/*
 VotV/Binaries/Win64/pyChaosMod/logs/*
 VotV/Binaries/Win64/pyChaosMod/cfg/*.cfg
+!VotV/Binaries/Win64/pyChaosMod/cfg/overlay.cfg
 **/__pycache__/*
 **.toc
 
