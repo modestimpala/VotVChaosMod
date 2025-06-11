@@ -83,7 +83,36 @@ class AsyncConfigManager:
                         "You may need to run the mod in-game once to generate the config files."
                     )
             
-            parser.read(config_path)
+            try:
+                parser.read(config_path)
+            except configparser.ParsingError as e:
+                logger.error(f"Config parsing error in {config_path}: {e}")
+                logger.info(f"Attempting to backup corrupted config file: {filename}")
+                
+                # Create backup of corrupted file
+                backup_path = f"{config_path}.corrupted.backup"
+                try:
+                    os.rename(config_path, backup_path)
+                    logger.info(f"Corrupted config backed up to: {backup_path}")
+                except OSError:
+                    logger.warning(f"Could not backup corrupted config file: {config_path}")
+                
+                logger.warning(f"Config file {config_path} backed up to {backup_path}. "
+                               "Please run the mod in-game to regenerate it.")
+                    
+            except configparser.Error as e:
+                logger.error(f"General config error in {config_path}: {e}")
+                raise FileNotFoundError(
+                    f"Config file error: {config_path}\n"
+                    f"Try deleting the file to regenerate it. Error: {e}"
+                )
+            except Exception as e:
+                logger.error(f"Unexpected error reading config {config_path}: {e}")
+                raise FileNotFoundError(
+                    f"Unexpected error reading config: {config_path}\n"
+                    f"Error: {e}"
+                )
+            
             self._config_parsers[section] = {
                 'parser': parser,
                 'path': config_path
