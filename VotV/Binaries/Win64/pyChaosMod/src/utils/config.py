@@ -99,6 +99,11 @@ class AsyncConfigManager:
                 
                 logger.warning(f"Config file {config_path} backed up to {backup_path}. "
                                "Please run the mod in-game to regenerate it.")
+                
+                raise FileNotFoundError(
+                    f"Malformed config file: {config_path}\n"
+                    f"Please check the file format or delete it to regenerate. Error: {e}"
+                )
                     
             except configparser.Error as e:
                 logger.error(f"General config error in {config_path}: {e}")
