@@ -53,7 +53,18 @@ class WebSocketHandler:
                         elif data['type'] == 'voting_started':
                             logger.debug("Received voting_started message from game")
                             num_options = data.get('num_options', 0)
-                            self.voting_system.set_voting_active(True, num_options)
+                            option_names = data.get('option_names', [])
+                            
+                            # Validate option names
+                            if len(option_names) != num_options:
+                                logger.warning(f"Option names count ({len(option_names)}) doesn't match num_options ({num_options})")
+                                # Fill missing names with defaults
+                                while len(option_names) < num_options:
+                                    option_names.append(f"Option {len(option_names) + 1}")
+                                # Trim excess names
+                                option_names = option_names[:num_options]
+                            
+                            self.voting_system.set_voting_active(True, num_options, option_names)
                         elif data['type'] == 'voting_ended':
                             logger.debug("Received voting_ended message from game")
                             self.voting_system.set_voting_active(False)
