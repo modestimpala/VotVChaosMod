@@ -62,10 +62,6 @@ def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    # Set specific level for twitchio.websocket
-    twitchio_logger = logging.getLogger('twitchio.websocket')
-    twitchio_logger.setLevel(logging.ERROR)
-
     # Set specific level for websockets.server
     websocket_server_logger = logging.getLogger('websockets.server')
     websocket_server_logger.setLevel(logging.ERROR)
@@ -73,7 +69,12 @@ def setup_logging():
     # Set specific level for aiohttp.access
     aiohttp_access_logger = logging.getLogger('aiohttp.access')
     aiohttp_access_logger.setLevel(logging.ERROR)
+    
+    # Set specific level for twitchAPI.chat
+    twitchapi_chat_logger = logging.getLogger('twitchAPI.chat')
+    twitchapi_chat_logger.setLevel(logging.ERROR)
 
+    
     # Create logs directory if it doesn't exist
     log_dir = 'logs'
     if not os.path.exists(log_dir):
