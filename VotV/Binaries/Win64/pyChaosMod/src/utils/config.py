@@ -53,10 +53,10 @@ class AsyncConfigManager:
         return self.config.get(key, default)
         
     def _find_base_path(self) -> str:
-        if os.path.exists('./listen') or os.path.exists('./cfg'):
-            return './'
-        elif os.path.exists('./pyChaosMod/listen') or os.path.exists('./pyChaosMod/cfg'):
+        if os.path.exists('./pyChaosMod/listen') or os.path.exists('./pyChaosMod/cfg'):
             return './pyChaosMod/'
+        elif os.path.exists('./listen') or os.path.exists('./cfg'):
+            return './'
         else:
             raise FileNotFoundError("Could not find pyChaosMod directory structure")
 
@@ -144,7 +144,7 @@ class AsyncConfigManager:
             config['files']['commands'] = os.path.join(self.base_path, 'twitchChannelPoints.cfg')
                        
         # VERSION
-        config['version'] = '3.3.0'
+        config['version'] = '3.3.1'
         # VERSION
         
         self.config = config
