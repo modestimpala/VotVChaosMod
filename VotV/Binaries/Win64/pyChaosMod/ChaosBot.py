@@ -274,7 +274,9 @@ if __name__ == "__main__":
         input() # Wait for user input before closing
     finally:
         logger.info("ChaosBot has exited.")
-        sys.exit(0)  # Exit with a zero status code for normal exit
+        # Pause to allow user to read the final message
+        input("Press Enter to close...")
+        sys.exit(0)
 
 async def shutdown(tasks, signal_received=None):
     if signal_received:

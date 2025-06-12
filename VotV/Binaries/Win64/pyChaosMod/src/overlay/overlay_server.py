@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import sys
 from aiohttp import web, WSMsgType
 import aiohttp_cors
 from typing import Set, Optional
@@ -18,6 +19,38 @@ class OverlayServer:
         self.site = None
         self.websocket_connections: Set = set()
         self._running = False
+        self.base_path = self._find_base_path()
+        
+    def _find_base_path(self) -> str:
+        if os.path.exists('./pyChaosMod/listen') or os.path.exists('./pyChaosMod/cfg'):
+            return './pyChaosMod/'
+        elif os.path.exists('./listen') or os.path.exists('./cfg'):
+            return './'
+        else:
+            logger.warning("Could not find pyChaosMod directory structure, using current directory")
+            return './'
+    
+    def _get_font_path(self) -> str:
+        """Get the path to the ShareTech font, handling both development and PyInstaller environments."""
+        # Check if running as PyInstaller bundle
+        if getattr(sys, 'frozen', False):
+            # Running as PyInstaller bundle
+            bundle_dir = sys._MEIPASS
+            font_path = os.path.join(bundle_dir, 'ShareTechMono-Regular.ttf')
+            if os.path.exists(font_path):
+                return font_path
+        
+        # Development environment - check in cfg directory
+        font_path = os.path.join(self.base_path, 'cfg', 'ShareTechMono-Regular.ttf')
+        if os.path.exists(font_path):
+            return font_path
+        
+        # Fallback - check current directory
+        font_path = os.path.join('.', 'ShareTechMono-Regular.ttf')
+        if os.path.exists(font_path):
+            return font_path
+        
+        return None
         
     async def websocket_handler(self, request):
         """Handle WebSocket connections from the overlay page."""
@@ -111,7 +144,7 @@ class OverlayServer:
     
     async def serve_css(self, request):
         """Serve the CSS file from cfg/styles.css."""
-        css_path = os.path.join(os.getcwd(), 'cfg', 'styles.css')
+        css_path = os.path.join(self.base_path, 'cfg', 'styles.css')
         
         try:
             with open(css_path, 'r', encoding='utf-8') as f:
@@ -128,8 +161,12 @@ class OverlayServer:
             return web.Response(text="/* Error loading CSS */", content_type='text/css')
     
     async def serve_font(self, request):
-        """Serve the font file from cfg/ShareTechMono-Regular.ttf."""
-        font_path = os.path.join(os.getcwd(), 'cfg', 'ShareTechMono-Regular.ttf')
+        """Serve the font file from the bundled location or cfg directory."""
+        font_path = self._get_font_path()
+        
+        if font_path is None:
+            logger.warning("ShareTech font file not found in any expected location")
+            return web.Response(status=404, text="Font file not found")
         
         try:
             with open(font_path, 'rb') as f:
