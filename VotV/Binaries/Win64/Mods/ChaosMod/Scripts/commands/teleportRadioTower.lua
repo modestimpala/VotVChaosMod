@@ -2,7 +2,7 @@ local UEHelpers = require("UEHelpers")
 
 return {
     execute = function()
-        local radioTowerLoc =  {X=1996.614, Y=-3067.324, Z=14487.162}
+        local radioTowerLoc =  {X=1954.681, Y=-2736.888, Z=15426.764}
 
         local FirstPlayerController = UEHelpers:GetPlayerController()
         local Pawn = FirstPlayerController.Pawn

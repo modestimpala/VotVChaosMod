@@ -1,3 +1,15 @@
+# 3.5.0
+- Initial release for latest stable game version: a09j_0001
+
+# 3.4.0
+- Fixed Nextbot AI
+- Nextbots can now be killed (not glorp)
+- 5G Horse can now be destroyed
+- Added commands:
+  - Force Save
+  - Monochrome Pigs
+  - Too Many Visitors
+
 # 3.3.0
 - Added OBS Browser Overlay
   - The webserver runs locally and updates with voting information in real-time

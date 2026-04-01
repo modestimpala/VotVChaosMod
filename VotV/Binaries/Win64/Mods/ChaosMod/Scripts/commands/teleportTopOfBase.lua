@@ -2,7 +2,7 @@ local UEHelpers = require("UEHelpers")
 
 return {
     execute = function()
-        local teleLoc =  {X=-1108.497, Y=674.101, Z=8024.267}
+        local teleLoc =  {X=-1708.571, Y=1447.389, Z=8559.301}
 
         local FirstPlayerController = UEHelpers:GetPlayerController()
         local Pawn = FirstPlayerController.Pawn
